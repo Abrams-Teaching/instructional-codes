@@ -20,7 +20,7 @@ int main ( int argc, char * argv[] ) {
   gsl_rng_set(r,5488);
   int i;
   float sigma = 0.25;
-  float mu = 4.0;
+  float mu = 4.0;  // you will use this with the code you add below
 
   printf("Here are some random floats uniformly distributed on [0,1]:\n");
   for (i=0;i<10;i++) {
@@ -37,10 +37,11 @@ int main ( int argc, char * argv[] ) {
     printf("%.3f\n",gsl_ran_gaussian(r,sigma));
   }
 
-  printf("Here are a few integers drawn randomly from a Poisson distribution with mean=%.5f:\n",mu);
-  for (i=0;i<10;i++) {
-    printf("%d\n",gsl_ran_poisson(r,mu));
-  }
+  /* Add some lines of code to pull ten random integer samples out of a Poisson 
+     distribution with a mean value of 4.0.
+     Consult the GSL docs!
+  */
+  
   printf("That's all!\n");
   gsl_rng_free(r);
 }

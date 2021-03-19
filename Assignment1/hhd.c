@@ -4,6 +4,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define RIGHT 1
 #define LEFT -1
@@ -39,7 +40,7 @@ void pts_out (FILE * fp, ptp P, int g) {
     ptp p=P;
     if (!fp||!P) return;
     for (p=P;p;p=p->next) {
-        fprintf(fp, "%.10lf %.10lf %i\n", p->x, p->y, p->g);
+        fprintf(fp, "%.10lf %.10lf\n", p->x, p->y);
     }
 }
 
@@ -54,8 +55,8 @@ void main (int argc, char * argv[]) {
     if (argc > 2) fp = fopen(argv[2], "w");
     else fp = stdout;
     
-    P = pointNode_Init(0, -0.5, 0);
-    P->next = pointNode_Init(0, 0.5, 0);  /* set up generation 0 */
+    P = pointNode_Init(0, -pow(2,n/2), 0);
+    P->next = pointNode_Init(0, pow(2,n/2), 0);  /* set up generation 0 */
     
     for (i = 0; i < n; i++) {
         d = RIGHT;
@@ -78,10 +79,10 @@ void main (int argc, char * argv[]) {
             p->next->next = q;
             d*=-1; /* flip the displacement direction */
         }
-        sprintf(fn,"%i.hhd",i);
-        fp=fopen(fn,"w");
-        pts_out(fp, P, i);
-        fclose(fp);
     }
+    sprintf(fn,"%i.hhd",i);
+    fp=fopen(fn,"w");
+    pts_out(fp, P, i);
+    fclose(fp);
     pointNode_Free(P);
 }
