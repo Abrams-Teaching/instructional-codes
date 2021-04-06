@@ -16,7 +16,7 @@
    For example, to run a 20x20 system at T = 0.5 for 1e7 cycles
    sampling every 100 cycles, the command looks like
            
-          ./ising -L 20 -T 0.5 -nc 1e7 -fs 100
+          ./ising_mc -L 20 -T 0.5 -nc 1e7 -fs 100
    
    The default values are shown in parentheses above.
 
