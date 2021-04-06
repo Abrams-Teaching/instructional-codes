@@ -155,15 +155,15 @@ int main ( int argc, char * argv[] ) {
 
       /* check for overlaps with other particles */
       if (!reject) {
-	      for (j=0;j<N;j++) {
-	        if (j!=i) {
-	          sx  = rx[i]-rx[j];
+        for (j=0;j<N;j++) {
+          if (j!=i) {
+            sx  = rx[i]-rx[j];
             sy  = ry[i]-ry[j];
             r2  = sx*sx + sy*sy;
             if (r2 < s2) reject=1;
           }
-	      }
-	      if (reject) novl++;
+        }
+        if (reject) novl++;
       }
 
       /* if move is rejected, undo displacement */
