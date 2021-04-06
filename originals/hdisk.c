@@ -55,12 +55,12 @@ void init ( double * rx, double * ry,
       ry[i] = sqrt(R2-rx[i]*rx[i])*(1.0-2*gsl_rng_uniform(r));
       /* check for overlaps; reject if an overlap is found */
       for (j=0;j<n;j++) {
-	if (j!=i) {
-	  sx  = rx[i]-rx[j];
-	  sy  = ry[i]-ry[j];
-	  r2  = sx*sx + sy*sy;
-	  if (r2 < s2) reject=1;
-	}
+        if (j!=i) {
+          sx  = rx[i]-rx[j];
+          sy  = ry[i]-ry[j];
+          r2  = sx*sx + sy*sy;
+          if (r2 < s2) reject=1;
+        }
       }
       nTrials++;
     }
