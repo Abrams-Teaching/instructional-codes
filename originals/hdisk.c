@@ -1,5 +1,5 @@
 /* 
-   Metropolis Monte Carlo simulation of hard disks confined in a circle, man
+   Metropolis Monte Carlo simulation of hard disks confined in a circle
 
    Cameron F. Abrams
 
