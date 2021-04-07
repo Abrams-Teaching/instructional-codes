@@ -57,7 +57,7 @@
    
    */
 int dE ( int ** M, int L, int i, int j ) {
-  return -2*(M[i][j])*(M[i?(i-1):(L-1)][j]+M[(i+1)%L][j]+
+  return 2*(M[i][j])*(M[i?(i-1):(L-1)][j]+M[(i+1)%L][j]+
 		      M[i][j?(j-1):(L-1)]+M[i][(j+1)%L]);
 }
 
@@ -106,6 +106,7 @@ int main (int argc, char * argv[]) {
 
   /* Computational variables */
   int nSamp;      /* Number of samples taken */
+  int nAcc;       /* Number of accepted flip attempts */
   int de;         /* energy change due to flipping a spin */
   double b;       /* Boltzman factor */
   double x;       /* random number */
@@ -121,6 +122,8 @@ int main (int argc, char * argv[]) {
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
 
+  int quiet = 0;
+
   /* Here we parse the command line arguments */
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-L")) L=atoi(argv[++i]);
@@ -128,6 +131,7 @@ int main (int argc, char * argv[]) {
     else if (!strcmp(argv[i],"-nc")) nCycles = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-fs")) fSamp = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-s")) Seed = (unsigned long)atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-q")) quiet = 1;
   }
   
   /* Output some initial information */
@@ -151,12 +155,10 @@ int main (int argc, char * argv[]) {
   /* Generate an initial state */
   init(M,L,r);
 
-  /* For computational efficiency, convert T to reciprocal T */
-  T=1.0/T;
-
   s = 0.0;
   e = 0.0;
   nSamp = 0;
+  nAcc = 0;
   for (c=0;c<nCycles;c++) {
     /* Make N flip attempts */
     for (a=0;a<N;a++) {
@@ -168,26 +170,30 @@ int main (int argc, char * argv[]) {
       de = dE(M,L,i,j);
       /* compute the Boltzmann factor; recall T is now
          reciprocal temperature */
-      b = exp(de*T);
+      b = exp(-de/T);
       /* pick a random number between 0 and 1 */
       x = gsl_rng_uniform(r);
       /* accept or reject this flip */
       if (x<b) { /* accept */
 	      /* flip it */
 	      M[i][j]*=-1;
+        nAcc+=1;
       }
     }
     /* Sample and accumulate averages */
     if (!(c%fSamp)) {
       samp(M,L,&s,&e);
-      fprintf(stdout,"%i %.5le %.5le\n",c,s,e);
-      fflush(stdout);
+      if (!quiet) {
+        fprintf(stdout,"%i %.5le %.5le\n",c,s,e);
+        fflush(stdout);
+      }
       ssum+=s;
       esum+=e;
       nSamp++;
     }
   }
-  fprintf(stdout,"# The average magnetization is %.5lf\n",ssum/nSamp);
-  fprintf(stdout,"# The average energy per spin is %.5lf\n",esum/nSamp);
+  fprintf(stdout,"# The average magnetization is %9.5lf\n",ssum/nSamp);
+  fprintf(stdout,"# The average energy per spin is %9.5lf\n",esum/nSamp);
+  fprintf(stdout,"# The acceptance ratio is %9.5lf\n",((double)nAcc)/(N*nCycles));
   fprintf(stdout,"# Program ends.\n");
 }
