@@ -8,7 +8,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 outfile='dR{:d}-dW{:d}.dat'
-cmd='./hd -N 200 -rho 0.5 -dr {:.1f} -seed {:d} -nc 2000 -dw {:.1f}'
+cmd='./hddb -N 200 -rho 0.5 -dr {:.1f} -seed {:d} -nc 2000 -dw {:.1f}'
 
 dws=[0.2,0.5,0.8]
 drs=np.concatenate((np.linspace(0,2.5,22),np.linspace(3,10,16)))
