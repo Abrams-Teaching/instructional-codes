@@ -114,7 +114,7 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-s")) s2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-nc")) nCycles = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-so")) short_out = 1;
-    else if (!strcmp(argv[i],"-s")) Seed = (unsigned long)atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-seed")) Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-xyz")) {
       fmt=XYZ;
       traj_fn = argv[++i];
