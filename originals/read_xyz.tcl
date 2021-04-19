@@ -15,8 +15,9 @@ proc read_xyz { fname } {
             lappend boxdat [lrange $dat 1 end]
         }
     }
-    for { set f 0 } { $f < [molinfo top get numframes] } { incr i } {
+    for { set f 0 } { $f < [molinfo top get numframes] } { incr f } {
         pbc set [lindex $boxdat $f] -first $f -last $f
+        puts "[lindex $boxdat $f]"
     }
     return $molid
 }
