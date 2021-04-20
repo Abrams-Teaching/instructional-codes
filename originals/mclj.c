@@ -25,7 +25,6 @@
 #include <math.h>
 #include <gsl/gsl_rng.h>
 
-
 /* An N^2 algorithm for computing the total energy.  The virial
    is also computed and returned in *vir. */
 double total_e ( double * rx, double * ry, double * rz, int N, double L,
