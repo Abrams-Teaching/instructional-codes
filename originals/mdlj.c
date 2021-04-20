@@ -36,6 +36,7 @@ void usage ( void ) {
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
   fprintf(stdout,"\t -fs [integer]\t\tSample frequency\n");
   fprintf(stdout,"\t -traj [string]\t\tTrajectory file name\n");  
+  fprintf(stdout,"\t -prog [integer]\tInterval with which logging output is generated\n");
   fprintf(stdout,"\t -icf [string]\t\tInitial configuration file\n");
   fprintf(stdout,"\t -seed [integer]\tRandom number generator seed\n");
   fprintf(stdout,"\t -uf          \t\tPrint unfolded coordinates in trajectory file\n");
@@ -57,12 +58,12 @@ void xyz_out (FILE * fp,
   fprintf(fp,"%i %i\n",N,put_vel);
   fprintf(fp,"BOX %.5lf %.5lf %.5lf\n",L,L,L);
   for (i=0;i<N;i++) {
-    fprintf(fp,"%i %.8lf %.8lf %.8lf ",z,
+    fprintf(fp,"%i % 10.6lf % 10.6lf % 10.6lf ",z,
 	    rx[i]+(unfold?(ix[i]*L):0.0),
 	    ry[i]+(unfold?(iy[i]*L):0.0),
 	    rz[i]+(unfold?(iz[i]*L):0.0));
     if (put_vel)
-      fprintf(fp,"%.8lf %.8lf %.8lf",vx[i],vy[i],vz[i]);
+      fprintf(fp,"% 10.6lf % 10.6lf % 10.6lf",vx[i],vy[i],vz[i]);
     fprintf(fp,"\n");
   }
 }
@@ -240,6 +241,7 @@ int main ( int argc, char * argv[] ) {
   char * traj_fn=NULL;
   FILE * out;
   char * init_cfg_file = NULL;
+  int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
 
@@ -259,6 +261,7 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-ecorr")) use_e_corr = 1;
     else if (!strcmp(argv[i],"-seed")) Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-uf")) unfold = 1;
+    else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-h")) {
       usage(); exit(0);
     }
@@ -357,8 +360,10 @@ int main ( int argc, char * argv[] ) {
     }
     KE*=0.5;
     TE=PE+KE;
-    fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
-	    s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V);
+    if (!(s%prog)) {
+        fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
+	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V);
+    }
     if (!(s%fSamp)&&traj_fn) {
       out=fopen(traj_fn,"a");
       xyz_out(out,rx,ry,rz,vx,vy,vz,ix,iy,iz,L,N,16,1,unfold);
