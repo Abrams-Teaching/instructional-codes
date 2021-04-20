@@ -106,9 +106,9 @@ int main ( int argc, char * argv[] ) {
   double * rx, * ry, * rz;
   int N=216,c,a,p;
   double L=0.0;
-  double rho=0.5, T=1.0, rc2 = 1.e20, vir, vir_old, vir_sum, pcor, V;
+  double rho=0.5, T=1.0, rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
   double E_new, E_old, esum, rr3, ecor, ecut;
-  double dr=0.1,dx,dy,dz;
+  double dr=0.2,dx,dy,dz;
   double rxold,ryold,rzold;
   int i,j;
   int nCycles = 10, nSamp, nEq=1000;
