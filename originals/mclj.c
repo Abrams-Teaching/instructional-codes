@@ -151,8 +151,7 @@ int main ( int argc, char * argv[] ) {
       }
     }
     else {
-      fprintf(stderr,"Error.  Argument '%s' is not recognized.\n",
-		 argv[i]);
+      fprintf(stderr,"Error.  Argument '%s' is not recognized.\n",argv[i]);
       exit(-1);
     }
   }
@@ -197,8 +196,9 @@ int main ( int argc, char * argv[] ) {
   /* Generate initial positions on a cubic grid, 
      and measure initial energy */
   init(rx,ry,rz,N,L,r);
+
   E_old = total_e(rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&vir_old);
-  if (traj_out==XYZ) {
+  if (traj_fn&&traj_out==XYZ) {
     fp=fopen(traj_fn,"w");
     write_xyz(fp,rx,ry,rz,N,L);
     fclose(fp);
@@ -260,7 +260,7 @@ int main ( int argc, char * argv[] ) {
         nSamp++;
       }
     }
-    if (!(c%traj_samp)) {
+    if (traj_fn&&!(c%traj_samp)) {
       if (traj_out==XYZ) {
         fprintf(stdout,"# Trajectory snapshot at %i\n",c);fflush(stdout);
         fp=fopen(traj_fn,"a");
