@@ -148,7 +148,7 @@ int main (int argc, char * argv[] ) {
     }
 
     i=0;
-    fprintf(stdout,"reading %s\n",trajfile);fflush(stdout);
+    fprintf(stdout,"Reading %s\n",trajfile);fflush(stdout);
     fp=fopen(trajfile,"r");
     while (Traj[i++]=read_xyz_frame(fp));
     nFrames=i-1;
