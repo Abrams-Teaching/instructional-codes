@@ -91,9 +91,9 @@ int xyz_in (FILE * fp, double * rx, double * ry, double * rz,
 /* An N^2 algorithm for computing forces and potential energy.  The virial
    is also computed and returned in *vir. */
 double total_e ( double * rx, double * ry, double * rz, 
-		 double * fx, double * fy, double * fz, 
-		 int N, double L,
-		 double rc2, double ecor, double ecut, double * vir ) {
+		             double * fx, double * fy, double * fz, 
+		             int N, double L,
+		             double rc2, double ecor, double ecut, double * vir ) {
   int i,j;
   double dx, dy, dz, r2, r6i;
   double e = 0.0, hL=L/2.0,f;
