@@ -60,16 +60,16 @@ for c in cols:
     else:
         plot_labels.append('')
 
-fig,ax=plt.subplots(1,2 if args.do_flyvberg else 1,figsize=(8 if args.do_flyvberg else 6,4))
+fig,ax=plt.subplots(1,1,figsize=(6,4))
 
 for yy,l in zip(y,plot_labels):
-    ax[0].plot(x,yy/args.N,label=l)
+    ax.plot(x,yy/args.N,label=l)
     if args.do_flyvberg:
         n,m,s=flyberg(yy/args.N)
-        ax[1].plot(n,m)
 
 if len(col_labels)>0:
-    ax[0].set_xlabel(col_labels[1])
-ax[0].set_ylabel(args.ylabel)
-ax[0].legend()
+    ax.set_xlabel(col_labels[1])
+ax.set_ylabel(args.ylabel)
+ax.legend()
 plt.savefig(args.o,bbox_inches='tight')
+
