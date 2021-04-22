@@ -35,50 +35,53 @@ def block ( A ):
 if __name__ == '__main__':
     parser=ap.ArgumentParser()
     parser.add_argument("-l",type=str,default="log",help="mdlj log file")
-    parser.add_argument("-d",default=2,type=int,help="data column to analyze")
+    parser.add_argument("-d",default='2',type=str,help="comma-separated list of data column(s) to analyze")
     parser.add_argument("-o",default='out.png',type=str,help="output file name")
     parser.add_argument("-N",default=1,type=int,help="number of particles in simulation")
     parser.add_argument("-show-column-labels",default=True,type=bool,help="show column labels")
     args=parser.parse_args()
 
-    data=np.loadtxt(args.l)
-    y=data[:,args.d]
-    print(len(y),'# data points')
-    c1n=[]
-    c1s=[]
-    j=0
-    while (len(y)>4):
-        mn=y.mean()/args.N
-        s2=y.var()/(args.N*args.N)
-        av=np.sqrt(s2/(len(y)-1))
-        sav=av/np.sqrt(2*(len(y)-1))
-        print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
-        c1n.append(j)
-        c1s.append(av)
-        y=block(y)
-        j+=1
+    cols=list(map(int,args.d.split(',')))
 
     data=np.loadtxt(args.l)
-    y=data[:149000,args.d]
-    print(len(y),'# data points')
-    c2n=[]
-    c2s=[]
-    j=0
-    while (len(y)>4):
-        mn=y.mean()/args.N
-        s2=y.var()/(args.N*args.N)
-        av=np.sqrt(s2/(len(y)-1))
-        sav=av/np.sqrt(2*(len(y)-1))
-        print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
-        c2n.append(j)
-        c2s.append(av)
-        y=block(y)
-        j+=1
+    Y=[data[:,_] for _ in cols]
+    print(len(data),'# data points')
+    for y in Y:
+        c1n=[]
+        c1s=[]
+        j=0
+        while (len(y)>4):
+            mn=y.mean()/args.N
+            s2=y.var()/(args.N*args.N)
+            av=np.sqrt(s2/(len(y)-1))
+            sav=av/np.sqrt(2*(len(y)-1))
+            print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
+            c1n.append(j)
+            c1s.append(av)
+            y=block(y)
+            j+=1
 
-    fig,ax=plt.subplots(1,1,figsize=(5,4))
-    ax.set_xlabel('M')
-    ax.set_ylabel('$\sigma$')
-    ax.scatter(c2n,c2s,marker='^',label='150,000')
-    ax.scatter(c1n,c1s,marker='s',label='600,000')
-    plt.legend()
-    plt.savefig(args.o,bbox_inches='tight')
+        data=np.loadtxt(args.l)
+        y=y[:len(y)//4]
+        print(len(y),'# data points')
+        c2n=[]
+        c2s=[]
+        j=0
+        while (len(y)>4):
+            mn=y.mean()/args.N
+            s2=y.var()/(args.N*args.N)
+            av=np.sqrt(s2/(len(y)-1))
+            sav=av/np.sqrt(2*(len(y)-1))
+            print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
+            c2n.append(j)
+            c2s.append(av)
+            y=block(y)
+            j+=1
+
+        fig,ax=plt.subplots(1,1,figsize=(5,4))
+        ax.set_xlabel('M')
+        ax.set_ylabel('$\sigma$')
+        ax.scatter(c2n,c2s,marker='^',label='150,000')
+        ax.scatter(c1n,c1s,marker='s',label='600,000')
+        plt.legend()
+        plt.savefig(args.o,bbox_inches='tight')

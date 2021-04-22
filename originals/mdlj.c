@@ -362,7 +362,7 @@ int main ( int argc, char * argv[] ) {
     TE=PE+KE;
     if (!(s%prog)) {
         fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
-	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V);
+	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V+pcor);
     }
     if (!(s%fSamp)&&traj_fn) {
       out=fopen(traj_fn,"a");

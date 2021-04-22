@@ -5,6 +5,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse as ap
 
+def flyberg ( y, minblocks=4 ):
+    c1n=[]
+    c1m=[]
+    c1s=[]
+    j=0
+    while (len(y)>minblocks):
+        mn=y.mean()/args.N
+        s2=y.var()/(args.N*args.N)
+        av=np.sqrt(s2/(len(y)-1))
+        sav=av/np.sqrt(2*(len(y)-1))
+        print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
+        c1n.append(j)
+        c1m.append(mn)
+        c1s.append(av)
+        y=block(y)
+        j+=1
+    return c1n,c1m,c1s
+
 parser=ap.ArgumentParser()
 parser.add_argument("-l",default="log",type=str,help="log file")
 parser.add_argument("-d",default='2',type=str,help="comma-separated-list of data columns to plot vs time")
@@ -33,13 +51,17 @@ for c in cols:
         plot_labels.append(col_labels[c])
     else:
         plot_labels.append('')
-fig,ax=plt.subplots(1,1,figsize=(6,4))
+
+
+fig,ax=plt.subplots(1,2,figsize=(8,4))
 
 for yy,l in zip(y,plot_labels):
-    ax.plot(x,yy,label=l)
+    ax[0].plot(x,yy,label=l)
+    n,m,s=flyberg(yy)
+    ax[1].plot(n,m)
 
 if len(col_labels)>0:
-    ax.set_xlabel(col_labels[1])
-ax.set_ylabel(args.ylabel)
-plt.legend()
+    ax[0].set_xlabel(col_labels[1])
+ax[0].set_ylabel(args.ylabel)
+ax[0].legend()
 plt.savefig(args.o,bbox_inches='tight')
