@@ -36,7 +36,7 @@ parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axi
 parser.add_argument("-o",default='out.png',type=str,help="output file name")
 parser.add_argument("-N",default=1,type=int,help="number of particles")
 parser.add_argument("-show-column-labels",default=True,type=bool,help="show column labels")
-parser.add_argument("-do_flyvberg",default=False,type=bool,help="Do Flyvberg analysis")
+parser.add_argument("-do-flyvberg",default=False,type=bool,help="Do Flyvberg analysis")
 args=parser.parse_args()
 
 col_labels=[]
