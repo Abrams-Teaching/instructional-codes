@@ -36,6 +36,7 @@ parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axi
 parser.add_argument("-o",default='out.png',type=str,help="output file name")
 parser.add_argument("-N",default=1,type=int,help="number of particles")
 parser.add_argument("-show-column-labels",default=True,type=bool,help="show column labels")
+parser.add_argument("-do_flyvberg",default=False,type=bool,help="Do Flyvberg analysis")
 args=parser.parse_args()
 
 col_labels=[]
@@ -59,13 +60,13 @@ for c in cols:
     else:
         plot_labels.append('')
 
-
-fig,ax=plt.subplots(1,2,figsize=(8,4))
+fig,ax=plt.subplots(1,2 if args.do_flyvberg else 1,figsize=(8 if args.do_flyvberg else 6,4))
 
 for yy,l in zip(y,plot_labels):
     ax[0].plot(x,yy/args.N,label=l)
-    n,m,s=flyberg(yy/args.N)
-    ax[1].plot(n,m)
+    if args.do_flyvberg:
+        n,m,s=flyberg(yy/args.N)
+        ax[1].plot(n,m)
 
 if len(col_labels)>0:
     ax[0].set_xlabel(col_labels[1])
