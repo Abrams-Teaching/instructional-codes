@@ -5,6 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse as ap
 
+def block ( A ):
+    Ab=[]
+    for i in range(len(A)//2):
+        Ab.append(0.5*(A[2*i]+A[2*i-1]))
+    return np.array(Ab)
+
 def flyberg ( y, minblocks=4):
     c1n=[]
     c1m=[]
