@@ -5,14 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse as ap
 
-def flyberg ( y, minblocks=4 ):
+def flyberg ( y, minblocks=4):
     c1n=[]
     c1m=[]
     c1s=[]
     j=0
     while (len(y)>minblocks):
-        mn=y.mean()/args.N
-        s2=y.var()/(args.N*args.N)
+        mn=y.mean()
+        s2=y.var()
         av=np.sqrt(s2/(len(y)-1))
         sav=av/np.sqrt(2*(len(y)-1))
         print('{:d} {:.5f} {:.5f} {:.5f}'.format(j,mn,av,sav))
@@ -28,6 +28,7 @@ parser.add_argument("-l",default="log",type=str,help="log file")
 parser.add_argument("-d",default='2',type=str,help="comma-separated-list of data columns to plot vs time")
 parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axis label")
 parser.add_argument("-o",default='out.png',type=str,help="output file name")
+parser.add_argument("-N",default=1,type=int,help="number of particles")
 parser.add_argument("-show-column-labels",default=True,type=bool,help="show column labels")
 args=parser.parse_args()
 
@@ -56,8 +57,8 @@ for c in cols:
 fig,ax=plt.subplots(1,2,figsize=(8,4))
 
 for yy,l in zip(y,plot_labels):
-    ax[0].plot(x,yy,label=l)
-    n,m,s=flyberg(yy)
+    ax[0].plot(x,yy/args.N,label=l)
+    n,m,s=flyberg(yy/args.N)
     ax[1].plot(n,m)
 
 if len(col_labels)>0:
