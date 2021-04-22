@@ -99,16 +99,14 @@ frametype * read_xyz_frame ( FILE * fp ) {
     char typ[3], dummy[5];
     char ln[255];
     frametype * f = NULL;
-    if (fgets(ln,255,fp)!=EOF){
+    if (fgets(ln,255,fp)){
         sscanf(ln,"%i %i\n",&N,&hasvel);
-        fprintf(stdout,"%i %i\n",N,hasvel);fflush(stdout);
         f = NewFrame(N,hasvel);
         fgets(ln,255,fp);
         sscanf(ln,"%s %lf %lf %lf\n",dummy,&f->Lx,&f->Ly,&f->Lz);
-        fprintf(stdout,"%s %.5lf %.5lf %.5lf\n",dummy,f->Lx,f->Ly,f->Lz);fflush(stdout);
         for (i=0;i<N;i++) {
             fgets(ln,255,fp);
-            sscanf(fp,"%s %lf %lf %lf %lf %lf %lf\n",typ,&f->rx[i],&f->ry[i],&f->rz[i],&vx,&vy,&vz);
+            sscanf(ln,"%s %lf %lf %lf %lf %lf %lf\n",typ,&f->rx[i],&f->ry[i],&f->rz[i],&vx,&vy,&vz);
             if (hasvel) {
                 f->vx[i]=vx;
                 f->vy[i]=vy;
