@@ -231,7 +231,8 @@ int main ( int argc, char * argv[] ) {
   int * ix, * iy, * iz;
   int N=216,c,a;
   double L=0.0;
-  double rho=0.5, T=0.0, rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
+  double rho=0.5;
+  double rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
   double PE, KE, TE, ecor, ecut, T0=1.0, TE0;
   double rr3,dt=0.001, dt2;
   int i,j,s;
@@ -250,7 +251,6 @@ int main ( int argc, char * argv[] ) {
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-T")) T=atof(argv[++i]);
     else if (!strcmp(argv[i],"-dt")) dt=atof(argv[++i]);
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
