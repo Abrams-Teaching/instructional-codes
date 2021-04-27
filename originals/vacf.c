@@ -56,9 +56,9 @@ frametype * NewFrame ( int N, int hv ) {
     return f;
 }
 
-/* Compute squared scalar distance between particles i and j in 
+/* Compute velocity dot product between particles i and j in 
    frame fi and fj, respectively; com_corr removes center of mass motion */
-double vij2_unwrapped ( frametype * fi, int i, frametype * fj, int j, int com_corr ) {
+double vij2 ( frametype * fi, int i, frametype * fj, int j, int com_corr ) {
     double dx, dy, dz;
     dx=(fi->vx[i]-(com_corr?fi->cvx:0))*(fj->vx[j]-(com_corr?fj->cvx:0));
     dy=(fi->vy[i]-(com_corr?fi->cvy:0))*(fj->vy[j]-(com_corr?fj->cvy:0));
@@ -162,7 +162,7 @@ int main (int argc, char * argv[] ) {
         for (dt=0;(t+dt)<M;dt++) {
             cnt[dt]++;  /* number of origins for interval length dt  */
             for (i=0;i<Traj[0]->N;i++) {
-	            sd[dt] += vij2_unwrapped(Traj[t+dt],i,Traj[t],i,0);
+	            sd[dt] += vij2(Traj[t+dt],i,Traj[t],i,1);
             }
         }
     }
