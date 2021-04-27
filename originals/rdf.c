@@ -121,7 +121,7 @@ frametype * read_xyz_frame ( FILE * fp ) {
     return f;
 }
 
-double min(double x, double y ) {
+double min(double x, double y) {
     if (x<y) return x;
     else return y;
 }
@@ -155,6 +155,7 @@ int main (int argc, char * argv[] ) {
     fclose(fp);
     if (!nFrames) {
         fprintf(stdout,"Error: trajectory %s has no data.\n",trajfile);
+        exit(-1);
     }
     fprintf(stdout,"Read %i frames from %s.\n",nFrames,trajfile);
 
@@ -170,12 +171,17 @@ int main (int argc, char * argv[] ) {
     /* Compute density, assuming NVT ensemble */
     fp=fopen(outfile,"w");
     fprintf(fp,"# RDF from %s\n",trajfile);
+    fprintf(fp,"#LABEL r g(r)\n")
+    fprintf(fp,"#UNITS Angstrom *\n")
+    /* Ideal-gas global density; assumes V is constant */
     rho=Traj[0]->N/(Traj[0]->Lx*Traj[0]->Ly*Traj[0]->Lz);
     for (i=0;i<nbins-1;i++) {
-        r=dr*(i+0.5);
-        vb=((i+1)*(i+1)*(i+1)-i*i*i)*dr*dr*dr;
-        nid=(4./3.)*M_PI*vb*rho;
-        fprintf(fp,"%.4lf %.4lf\n",i*dr,(double)(H[i])/(nFrames*Traj[0]->N*nid));
+        /* bin volume */
+        vb=4./3.*M_PI*((i+1)*(i+1)*(i+1)-i*i*i)*dr*dr*dr;
+        /* number of particles in this shell if this were
+           an ideal gas */
+        nid=vb*rho;
+        fprintf(fp,"%.5lf %.5lf\n",i*dr,(double)(H[i])/(nFrames*Traj[0]->N*nid));
     }
     fclose(fp);
     fprintf(stdout,"%s created.\n",outfile);
