@@ -1,17 +1,16 @@
 /* 
-   XYZ-trajectory analyzer: computes radial distribution functions
+   XYZ-trajectory analyzer: computes velocity autocorrelation
 
    Cameron F. Abrams
 
    Written for the course CHE T580, Modern Molecular Simulation
    Spring 20-21
 
-   compile using "gcc -o rdf rdf.c -lm"
+   compile using "gcc -o vacf vacf.c -lm"
 
-   runs as "./rdf -t <trajctory file(traj.xyz)> -dr <resolution(0.1)> -rcut <cutoff radius(3.5)>"
+   runs as "./vacf -t <trajctory file(traj.xyz)>"
 
-   Note, the trajectory file must contain the box size in the comment line for
-   each frame (this is my convention, not the standard)
+   Note, the trajectory file must contain velocities!
 
    Drexel University, Department of Chemical Engineering
    Philadelphia
@@ -31,6 +30,8 @@ typedef struct FRAME {
     int * typ; // array of particle types 0, 1, ...
     int N; // number of particles
     double Lx, Ly, Lz; // box dimensions
+    double cx, cy, cz; // center of mass positions
+    double cvx, cvy, cvz; // center of mass velocities
 } frametype;
 
 /* Create and return an empty frame */
@@ -50,45 +51,19 @@ frametype * NewFrame ( int N, int hv ) {
         f->vx=NULL;
     }
     f->typ=(int*)malloc(sizeof(int)*N);
+    f->cx=f->cy=f->cz=0.0;
+    f->cvx=f->cvy=f->cvz=0.0;
     return f;
 }
 
-/* Compute scalar distance between particles i and j in frame f;
-   note the use of the minimum image convention */
-double rij ( frametype * f, int i, int j ) {
+/* Compute squared scalar distance between particles i and j in 
+   frame fi and fj, respectively; com_corr removes center of mass motion */
+double vij2_unwrapped ( frametype * fi, int i, frametype * fj, int j, int com_corr ) {
     double dx, dy, dz;
-    double hLx=0.5*f->Lx,hLy=0.5*f->Ly,hLz=0.5*f->Lz;
-    dx=f->rx[i]-f->rx[j];
-    dy=f->ry[i]-f->ry[j];
-    dz=f->rz[i]-f->rz[j];
-    if (dx<-hLx) dx+=f->Lx;
-    if (dx> hLx) dx-=f->Lx;
-    if (dy<-hLy) dy+=f->Ly;
-    if (dy> hLy) dy-=f->Ly;
-    if (dz<-hLz) dz+=f->Lz;
-    if (dz> hLz) dz-=f->Lz;
-    return sqrt(dx*dx+dy*dy+dz*dz);
-}
-
-/* An N^2 algorithm for computing interparticle separations
-   and updating the radial distribution function histogram. */
-void update_hist ( frametype * f, double rcut, double dr, int * H, int nbins ) {
-    int i,j;
-    double r;
-    int bin;
-    for (i=0;i<f->N-1;i++) {
-        for (j=i+1;j<f->N;j++) {
-            r=rij(f,i,j);
-            if (r<rcut) {
-                bin=(int)(r/dr);
-                if (bin<0||bin>=nbins) {
-                    fprintf(stderr,"Warning: bin range violation: %.3lf not on [0.0,%.3lf]\n",r,rcut);
-                } else {
-                    H[bin]+=2;
-                }
-            }
-        }
-    }
+    dx=(fi->vx[i]-(com_corr?fi->cvx:0))*(fj->vx[j]-(com_corr?fj->cvx:0));
+    dy=(fi->vy[i]-(com_corr?fi->cvy:0))*(fj->vy[j]-(com_corr?fj->cvy:0));
+    dz=(fi->vz[i]-(com_corr?fi->cvz:0))*(fj->vz[j]-(com_corr?fj->cvz:0));
+    return dx+dy+dz;
 }
 
 /* Read an XYZ-format frame from stream fp; returns the new frame.  Note
@@ -112,39 +87,52 @@ frametype * read_xyz_frame ( FILE * fp ) {
                 f->vy[i]=vy;
                 f->vz[i]=vz;
             }
+            f->cx+=f->rx[i];
+            f->cy+=f->ry[i];
+            f->cz+=f->rz[i];
+            if (hasvel) {
+                f->cvx+=f->vx[i];
+                f->cvy+=f->vy[i];
+                f->cvz+=f->vz[i];
+            }
             j=0;
             while(strcmp(elem[j],"NULL")&&strcmp(elem[j],typ)) j++;
             if (strcmp(elem[j],"NULL")) f->typ[i]=j;
             else f->typ[i]=-1;
         }
+        f->cx/=N;
+        f->cy/=N;
+        f->cz/=N;
+        f->cvx/=N;
+        f->cvy/=N;
+        f->cvz/=N;
     }
     return f;
-}
-
-double min(double x, double y) {
-    if (x<y) return x;
-    else return y;
 }
 
 #define MAXFRAMES 10000
 int main (int argc, char * argv[] ) {
     frametype * Traj[MAXFRAMES];
-    int nFrames = 0;
+    int M = 0;
     int i,nc;
     char * trajfile=NULL;
     FILE * fp;
     char * length_units = "sigma";
-    double dr=0.1,rcut=3.5, rho, r, vb, nid, L2min;
-    int * H, nbins=0;
-    char * outfile="rdf.dat";
-    int begin_frame=0, nFramesAnalyzed=0;
+    char * time_units = "sigma*sqrt(mass/epsilon)";
+    double * sd;
+    int t, dt, * cnt, tmax=0;
+    double md_time_step = 0.001;
+    int traj_interval=1000;
+    char * outfile="vacf.dat";
+    int begin_frame=0, MAnalyzed=0;
     for (i=1;i<argc;i++) {
         if (!strcmp(argv[i],"-t")) trajfile=argv[++i];
-        else if (!strcmp(argv[i],"-dr")) dr=atof(argv[++i]);
-        else if (!strcmp(argv[i],"-rcut")) rcut=atof(argv[++i]);
         else if (!strcmp(argv[i],"-o")) outfile=argv[++i];
         else if (!strcmp(argv[i],"-begin-frame")) begin_frame=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-traj-interval")) traj_interval=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-md-time-step")) md_time_step=atof(argv[++i]);
         else if (!strcmp(argv[i],"-length-units")) length_units=argv[++i];
+        else if (!strcmp(argv[i],"-time-units")) time_units=argv[++i];
     }
     if (!trajfile) {
         fprintf(stdout,"Error: a trajectory file must be specified with -t\n");
@@ -155,38 +143,37 @@ int main (int argc, char * argv[] ) {
     fprintf(stdout,"Reading %s\n",trajfile);fflush(stdout);
     fp=fopen(trajfile,"r");
     while (Traj[i++]=read_xyz_frame(fp));
-    nFrames=i-1;
+    M=i-1;
     fclose(fp);
-    if (!nFrames) {
+    if (!M) {
         fprintf(stdout,"Error: trajectory %s has no data.\n",trajfile);
         exit(-1);
     }
-    fprintf(stdout,"Read %i frames from %s.\n",nFrames,trajfile);
+    fprintf(stdout,"Read %i frames from %s.\n",M,trajfile);
 
-    /* Adjust cutoff and compute histogram */
-    L2min=min(Traj[0]->Lx/2,min(Traj[0]->Ly/2,Traj[0]->Lz/2));
-    if (rcut>L2min) rcut=L2min;
-    nbins=(int)(rcut/dr)+1;
-    H=(int*)malloc(sizeof(int)*nbins);
-    for (i=0;i<nbins;i++) H[i]=0;
-    for (i=begin_frame;i<nFrames;i++) update_hist(Traj[i],rcut,dr,H,nbins);
-    nFramesAnalyzed=nFrames-begin_frame;
+    /* Allocate and initialize the squared-displacement */
+    sd=(double*)calloc(M-begin_frame,sizeof(double));
+    cnt=(int*)calloc(M-begin_frame,sizeof(int));
 
-    /* Normalize and output g(r) to the terminal */
-    /* Compute density, assuming NVT ensemble */
+    /* Compute the mean-squared displacement using
+     the straightforward algorithm */
+    fprintf(stdout,"# computing VACF...\n");fflush(stdout);
+    for (t=begin_frame;t<M;t++) {
+        for (dt=0;(t+dt)<M;dt++) {
+            cnt[dt]++;  /* number of origins for interval length dt  */
+            for (i=0;i<Traj[0]->N;i++) {
+	            sd[dt] += vij2_unwrapped(Traj[t+dt],i,Traj[t],i,0);
+            }
+        }
+    }
     fp=fopen(outfile,"w");
-    fprintf(fp,"# RDF from %s\n",trajfile);
-    fprintf(fp,"#LABEL r g(r)\n");
-    fprintf(fp,"#UNITS %s *\n",length_units);
-    /* Ideal-gas global density; assumes V is constant */
-    rho=Traj[0]->N/(Traj[0]->Lx*Traj[0]->Ly*Traj[0]->Lz);
-    for (i=0;i<nbins-1;i++) {
-        /* bin volume */
-        vb=4./3.*M_PI*((i+1)*(i+1)*(i+1)-i*i*i)*dr*dr*dr;
-        /* number of particles in this shell if this were
-           an ideal gas */
-        nid=vb*rho;
-        fprintf(fp,"%.5lf %.5lf\n",i*dr,(double)(H[i])/(nFramesAnalyzed*Traj[0]->N*nid));
+    fprintf(fp,"# VACF from %s\n",trajfile);
+    fprintf(fp,"#LABEL time msd\n");
+    fprintf(fp,"#UNITS %s %s^2\n",time_units,length_units);
+    for (t=0;t<M-begin_frame;t++) {
+        sd[t] /= cnt[t]?(Traj[0]->N*cnt[t]):1;
+        fprintf(fp,"% .5lf % .8lf\n",
+	        t*traj_interval*md_time_step,sd[t]);
     }
     fclose(fp);
     fprintf(stdout,"%s created.\n",outfile);

@@ -293,6 +293,7 @@ int main ( int argc, char * argv[] ) {
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nSteps %i, seed %ld, dt %.5lf\n",
 	  nSteps,Seed,dt);
+  fprintf(stdout,"# ecor %.5lf\n",ecor);
   
   /* Seed the random number generator */
   gsl_rng_set(r,Seed);
