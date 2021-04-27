@@ -171,8 +171,8 @@ int main (int argc, char * argv[] ) {
     /* Compute density, assuming NVT ensemble */
     fp=fopen(outfile,"w");
     fprintf(fp,"# RDF from %s\n",trajfile);
-    fprintf(fp,"#LABEL r g(r)\n")
-    fprintf(fp,"#UNITS Angstrom *\n")
+    fprintf(fp,"#LABEL r g(r)\n");
+    fprintf(fp,"#UNITS Angstrom *\n");
     /* Ideal-gas global density; assumes V is constant */
     rho=Traj[0]->N/(Traj[0]->Lx*Traj[0]->Ly*Traj[0]->Lz);
     for (i=0;i<nbins-1;i++) {
