@@ -34,5 +34,6 @@ for f in args.i:
             ig=ig[1:]*lj(r[1:i],args.eps,args.sig)
             u=2*np.pi*args.rho*si.simpson(ig,x=r[1:i])
             print("u={:.3f}".format(u))
-    ax.plot(r,g)
+    ax.plot(r,g,label=f)
+ax.legend()
 plt.savefig(args.o,bbox_inches='tight')
