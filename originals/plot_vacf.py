@@ -21,5 +21,6 @@ for f in args.i:
     D=1./3.*si.simpson(vacf,x=t)
     print(f,D)
     ax[0].plot(t,vacf)
-    ax[1].plot(t[:len(t)//args.z],vacf[:len(vacf)//args.z])
+    ax[1].plot(t[:len(t)//args.z],vacf[:len(vacf)//args.z],label=f)
+ax[1].legend()
 plt.savefig(args.o,bbox_inches='tight')

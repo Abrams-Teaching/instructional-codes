@@ -110,7 +110,7 @@ frametype * read_xyz_frame ( FILE * fp ) {
     return f;
 }
 
-#define MAXFRAMES 10000
+#define MAXFRAMES 100000
 int main (int argc, char * argv[] ) {
     frametype * Traj[MAXFRAMES];
     int M = 0;
