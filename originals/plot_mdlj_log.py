@@ -30,17 +30,21 @@ def flyberg ( y, minblocks=4):
     return c1n,c1m,c1s
 
 parser=ap.ArgumentParser()
-parser.add_argument("-l",default="log",type=str,help="log file")
+parser.add_argument("-logs",default=[],action='append',type=str,help="log file")
+parser.add_argument("-labels",default=[],action='append',type=str,help="labels")
 parser.add_argument("-d",default='2',type=str,help="comma-separated-list of data columns to plot vs time")
 parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axis label")
 parser.add_argument("-o",default='out.png',type=str,help="output file name")
 parser.add_argument("-N",default=1,type=int,help="number of particles")
 parser.add_argument("-show-column-labels",default=False,action='store_true',help="show column labels")
 parser.add_argument("-do-flyvberg",default=False,action='store_true',help="Do Flyvberg analysis")
+parser.add_argument("-divide-by-N",default=False,action='store_true',help="what do you think?")
 args=parser.parse_args()
 
+if len(args.logs)==0:
+    args.logs.append("log")
 col_labels=[]
-with open(args.l) as f:
+with open(args.logs[0]) as f:
     for l in f:
         tok=l.split()
         if tok[0]=="#LABELS":
@@ -48,24 +52,40 @@ with open(args.l) as f:
 if args.show_column_labels:
     for i,c in enumerate(col_labels):
         print(i,c)
-dat=np.loadtxt(args.l)
-cols=list(map(int,args.d.split(',')))
-x=dat[:,1]
-y=[]
+    exit()
+alldat={}
+pdat={}
 plot_labels=[]
-for c in cols:
-    y.append(dat[:,c])
-    if len(col_labels)>0:
-        plot_labels.append(col_labels[c])
-    else:
-        plot_labels.append('')
+for log in args.logs:
+    print(log)
+    alldat[log]=np.loadtxt(log)
+    cols=list(map(int,args.d.split(',')))
+    x=alldat[log][:,1]
+    y=[]
+
+    for c in cols:
+        y.append(alldat[log][:,c].copy())
+        if len(col_labels)>0:
+            plot_labels.append(col_labels[c])
+        else:
+            plot_labels.append('')
+    pdat[log]=[x,y]
 
 fig,ax=plt.subplots(1,1,figsize=(6,4))
 
-for yy,l in zip(y,plot_labels):
-    ax.plot(x,yy/args.N,label=l)
-    if args.do_flyvberg:
-        n,m,s=flyberg(yy/args.N)
+
+if len(args.labels)>0:
+    plot_labels=args.labels
+print("N sig_T/<T>^2")
+for log,label in zip(args.logs,plot_labels):
+    x,yy=pdat[log]
+
+    for y in yy:
+        relfluc=y[len(y)//5:].var()/(y[len(y)//5:].mean()**2)*args.N
+        print('{:.3f}'.format(relfluc))
+        ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}, $N\langle T^2\rangle/\langle T\rangle^2$ = {:.4f}'.format(label,relfluc))
+        if args.do_flyvberg:
+            n,m,s=flyberg(y/args.N)
 
 if len(col_labels)>0:
     ax.set_xlabel(col_labels[1])
