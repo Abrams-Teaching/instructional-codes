@@ -1,16 +1,15 @@
 /* 
    Molecular Dynamics simulation of a Lennard-Jones fluid
-   in a periodic boundary using an Andersen thermostat
+   in a periodic boundary using the Langevin thermostat
 
    Cameron F. Abrams
 
-   Written for the course CHE T580, Modern Molecular Simulations
+   Written for the course CHE T580, Mddern Molecular Simulations
    Spring 2021
 
-   compile using "gcc -o mdlj_ber mdlj_ber.c -lm -lgsl"
+   compile using "gcc -o mdlj_lan mdlj_lan.c -lm -lgsl"
 
-   You must have the GNU Scientific Library installed; see
-   the coursenotes to learn how to do this.
+   You must have the GNU Scientific Library installed.
 
    Drexel University, Department of Chemical Engineering
    Philadelphia
@@ -29,10 +28,10 @@ void usage ( void ) {
   fprintf(stdout,"mdlj [options]\n\n");
   fprintf(stdout,"Options:\n");
   fprintf(stdout,"\t -N [integer]\t\tNumber of particles\n");
-  fprintf(stdout,"\t -isoKT [float]\t\tPerform isokinetic rescaling to this temperature\n");
-  fprintf(stdout,"\t -isoKi [integer]\t\tPerform isokinetic rescaling every i timesteps\n");
   fprintf(stdout,"\t -rho [real]\t\tNumber density\n");
   fprintf(stdout,"\t -dt [real]\t\tTime step\n");
+  fprintf(stdout,"\t -lan_friction [real]\t\tLangevin friction\n");
+  fprintf(stdout,"\t -lanT [real]\t\tLangevin temperature\n");
   fprintf(stdout,"\t -rc [real]\t\tCutoff radius\n");
   fprintf(stdout,"\t -ns [real]\t\tNumber of integration steps\n");
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
@@ -90,21 +89,6 @@ int xyz_in (FILE * fp, double * rx, double * ry, double * rz,
   return has_vel;
 }
 
-double andersen ( double * vx, double * vy, double * vz, int N, double nu, double sigma, double dt, gsl_rng * r ) {
-  int i;
-  double KE = 0.0;
-  for (i=0;i<N;i++) {
-    if (gsl_rng_uniform(r) < nu*dt) {
-      vx[i]=gsl_ran_gaussian(r,sigma);
-      vy[i]=gsl_ran_gaussian(r,sigma);
-      vz[i]=gsl_ran_gaussian(r,sigma);
-      }
-    KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
-  }
-  KE*=0.5;
-  return KE;
-}
-
 /* An N^2 algorithm for computing forces and potential energy.  The virial
    is also computed and returned in *vir. */
 double total_e ( double * rx, double * ry, double * rz, 
@@ -115,10 +99,10 @@ double total_e ( double * rx, double * ry, double * rz,
   double dx, dy, dz, r2, r6i;
   double e = 0.0, hL=L/2.0,f;
 
-  /* Zero the forces */
-  for (i=0;i<N;i++) {
+  /* do NOT Zero the forces! */
+  /*for (i=0;i<N;i++) {
     fx[i]=fy[i]=fz[i]=0.0;
-  }
+  }*/
    
   *vir=0.0;
   for (i=0;i<(N-1);i++) {
@@ -247,6 +231,7 @@ int main ( int argc, char * argv[] ) {
   double * fx, * fy, * fz;
   int * ix, * iy, * iz;
   int N=216,c,a;
+  double gamma=1.0, gfric, noise, lanT=2.0;
   double L=0.0;
   double rho=0.5;
   double rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
@@ -262,17 +247,15 @@ int main ( int argc, char * argv[] ) {
   int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
-  double and_nu=0.0;
-  double and_sigma=0.0;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-and_nu")) and_nu=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-andT")) and_sigma=sqrt(atof(argv[++i]));
     else if (!strcmp(argv[i],"-dt")) dt=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-lanT")) lanT=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-lan_friction")) gamma=atof(argv[++i]);
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-T0")) T0=atof(argv[++i]);
@@ -308,13 +291,19 @@ int main ( int argc, char * argv[] ) {
   /* compute the squared time step */
   dt2=dt*dt;
 
+  /* Compute gfric */
+  gfric = 1.0-gamma*dt/2.0;
+
+  /* Compute noise */
+  noise = sqrt(6.0*gamma*lanT/dt);
+
   /* Output some initial information */
-  fprintf(stdout,"# NVE MD Simulation of a Lennard-Jones fluid\n");
+  fprintf(stdout,"# NVT MD Simulation of a Lennard-Jones fluid\n");
   fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf\n",
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nSteps %i, seed %ld, dt %.5lf\n",
 	  nSteps,Seed,dt);
-  fprintf(stdout,"# ecor %.5lf\n",ecor);
+  fprintf(stdout,"# Langevin thermotat: Gamma = %.5lf T = %.2lf\n",gamma,lanT);
   
   /* Seed the random number generator */
   gsl_rng_set(r,Seed);
@@ -358,9 +347,10 @@ int main ( int argc, char * argv[] ) {
       rx[i]+=vx[i]*dt+0.5*dt2*fx[i];
       ry[i]+=vy[i]*dt+0.5*dt2*fy[i];
       rz[i]+=vz[i]*dt+0.5*dt2*fz[i];
-      vx[i]+=0.5*dt*fx[i];
-      vy[i]+=0.5*dt*fy[i];
-      vz[i]+=0.5*dt*fz[i];
+      vx[i]=vx[i]*gfric + 0.5*dt*fx[i];
+      vy[i]=vy[i]*gfric + 0.5*dt*fy[i];
+      vz[i]=vz[i]*gfric + 0.5*dt*fz[i];
+
       /* Apply periodic boundary conditions */
       if (rx[i]<0.0) { rx[i]+=L; ix[i]--; }
       if (rx[i]>L)   { rx[i]-=L; ix[i]++; }
@@ -370,18 +360,23 @@ int main ( int argc, char * argv[] ) {
       if (rz[i]>L)   { rz[i]-=L; iz[i]++; }
     }
     /* Calculate forces */
+    /* Initialize forces */
+    for (i=0;i<N;i++) {
+      fx[i] = 2*noise*(gsl_rng_uniform(r)-0.5);
+      fy[i] = 2*noise*(gsl_rng_uniform(r)-0.5);
+      fz[i] = 2*noise*(gsl_rng_uniform(r)-0.5);
+    }
     PE = total_e(rx,ry,rz,fx,fy,fz,N,L,rc2,ecor,ecut,&vir);
       
     /* Second integration half-step */
     KE = 0.0;
     for (i=0;i<N;i++) {
-      vx[i]+=0.5*dt*fx[i];
-      vy[i]+=0.5*dt*fy[i];
-      vz[i]+=0.5*dt*fz[i];
+      vx[i] = vx[i]*gfric + 0.5*dt*fx[i];
+      vy[i] = vy[i]*gfric + 0.5*dt*fy[i];
+      vz[i] = vz[i]*gfric + 0.5*dt*fz[i];
       KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
     }
     KE*=0.5;
-    KE=andersen(vx,vy,vz,N,and_nu,and_sigma,dt,r);
     TE=PE+KE;
     if (!(s%prog)) {
         fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",

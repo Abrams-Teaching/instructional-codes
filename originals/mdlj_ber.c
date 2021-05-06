@@ -1,5 +1,5 @@
 /* 
-   Microcanonical Molecular Dynamics simulation of a Lennard-Jones fluid
+   Molecular Dynamics simulation of a Lennard-Jones fluid
    in a periodic boundary using a Berendsen thermostat
 
    A velocity distribution is automatically tallied and output.

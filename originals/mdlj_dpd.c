@@ -1,13 +1,13 @@
 /* 
    Molecular Dynamics simulation of a Lennard-Jones fluid
-   in a periodic boundary using an Andersen thermostat
+   in a periodic boundary using the DPD thermostat
 
    Cameron F. Abrams
 
-   Written for the course CHE T580, Modern Molecular Simulations
+   Written for the course CHE T580, Mddern Molecular Simulations
    Spring 2021
 
-   compile using "gcc -o mdlj_ber mdlj_ber.c -lm -lgsl"
+   compile using "gcc -o mdlj_dpd mdlj_dpd.c -lm -lgsl"
 
    You must have the GNU Scientific Library installed; see
    the coursenotes to learn how to do this.
@@ -29,10 +29,10 @@ void usage ( void ) {
   fprintf(stdout,"mdlj [options]\n\n");
   fprintf(stdout,"Options:\n");
   fprintf(stdout,"\t -N [integer]\t\tNumber of particles\n");
-  fprintf(stdout,"\t -isoKT [float]\t\tPerform isokinetic rescaling to this temperature\n");
-  fprintf(stdout,"\t -isoKi [integer]\t\tPerform isokinetic rescaling every i timesteps\n");
   fprintf(stdout,"\t -rho [real]\t\tNumber density\n");
   fprintf(stdout,"\t -dt [real]\t\tTime step\n");
+  fprintf(stdout,"\t -dpdT [real]\t\tSetpoint temperature\n");
+  fprintf(stdout,"\t -dpd_gam [real]\t\tDPD Gamma\n");
   fprintf(stdout,"\t -rc [real]\t\tCutoff radius\n");
   fprintf(stdout,"\t -ns [real]\t\tNumber of integration steps\n");
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
@@ -90,30 +90,19 @@ int xyz_in (FILE * fp, double * rx, double * ry, double * rz,
   return has_vel;
 }
 
-double andersen ( double * vx, double * vy, double * vz, int N, double nu, double sigma, double dt, gsl_rng * r ) {
-  int i;
-  double KE = 0.0;
-  for (i=0;i<N;i++) {
-    if (gsl_rng_uniform(r) < nu*dt) {
-      vx[i]=gsl_ran_gaussian(r,sigma);
-      vy[i]=gsl_ran_gaussian(r,sigma);
-      vz[i]=gsl_ran_gaussian(r,sigma);
-      }
-    KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
-  }
-  KE*=0.5;
-  return KE;
-}
-
 /* An N^2 algorithm for computing forces and potential energy.  The virial
    is also computed and returned in *vir. */
 double total_e ( double * rx, double * ry, double * rz, 
+		             double * vx, double * vy, double * vz, 
 		             double * fx, double * fy, double * fz, 
 		             int N, double L,
-		             double rc2, double ecor, double ecut, double * vir ) {
+		             double rc2, double ecor, double ecut, 
+                 double gamma, double sigma, double sqrt_dt,
+                 gsl_rng * r, double * vir ) {
   int i,j;
   double dx, dy, dz, r2, r6i;
   double e = 0.0, hL=L/2.0,f;
+  double vijx, vijy, vijz, z, dotprod, fd, fr;
 
   /* Zero the forces */
   for (i=0;i<N;i++) {
@@ -147,6 +136,32 @@ double total_e ( double * rx, double * ry, double * rz,
         fz[i] += dz*f/r2;
         fz[j] -= dz*f/r2;
         *vir += f;
+        /* Compute the relative velocity
+	     and its dot product with displacement
+	     vector */
+        vijx = vx[i]-vx[j];
+        vijy = vy[i]-vy[j];
+        vijz = vz[i]-vz[j];
+        dotprod = vijx*dx+vijy*dy+vijz*dz;
+
+        /* Compute the DPD forces */
+        fd = -gamma*dotprod/r2;
+        fx[i]+=dx*fd;
+        fx[j]-=dx*fd;
+        fy[i]+=dy*fd;
+        fy[j]-=dy*fd;
+        fz[i]+=dz*fd;
+        fz[j]-=dz*fd;
+        fr = sigma/sqrt(r2)/sqrt_dt;
+        z=gsl_ran_gaussian(r,1.0)*fr;
+        fx[i]+=dx*z;
+        fx[j]-=dx*z;
+        z=gsl_ran_gaussian(r,1.0)*fr;
+        fy[i]+=dy*z;
+        fy[j]-=dy*z;
+        z=gsl_ran_gaussian(r,1.0)*fr;
+        fz[i]+=dz*z;
+        fz[j]-=dz*z;
       }
     }
   }
@@ -262,18 +277,17 @@ int main ( int argc, char * argv[] ) {
   int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
-  double and_nu=0.0;
-  double and_sigma=0.0;
+  double dpdT=2.0,dpd_gam=1.0,dpd_sigma,sqrt_dt;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-and_nu")) and_nu=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-andT")) and_sigma=sqrt(atof(argv[++i]));
     else if (!strcmp(argv[i],"-dt")) dt=atof(argv[++i]);
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-dpdT")) dpdT=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-dpd_gam")) dpd_gam=atof(argv[++i]);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-T0")) T0=atof(argv[++i]);
     else if (!strcmp(argv[i],"-fs")) fSamp=atoi(argv[++i]);
@@ -307,14 +321,18 @@ int main ( int argc, char * argv[] ) {
 
   /* compute the squared time step */
   dt2=dt*dt;
+  sqrt_dt = sqrt(dt);
+
+  /* Compute sigma from gamma for DPD thermostat */
+  dpd_sigma = sqrt(2*dpd_gam*dpdT);
 
   /* Output some initial information */
-  fprintf(stdout,"# NVE MD Simulation of a Lennard-Jones fluid\n");
+  fprintf(stdout,"# NVT MD Simulation of a Lennard-Jones fluid\n");
   fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf\n",
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nSteps %i, seed %ld, dt %.5lf\n",
 	  nSteps,Seed,dt);
-  fprintf(stdout,"# ecor %.5lf\n",ecor);
+  fprintf(stdout,"# DPD thermostat: T = %.5lf; Gamma = %.5lf\n",dpdT,dpd_gam);
   
   /* Seed the random number generator */
   gsl_rng_set(r,Seed);
@@ -347,7 +365,7 @@ int main ( int argc, char * argv[] ) {
     xyz_out(out,rx,ry,rz,vx,vy,vz,ix,iy,iz,L,N,16,1,unfold);
     fclose(out);
   }
-  PE = total_e(rx,ry,rz,fx,fy,fz,N,L,rc2,ecor,ecut,&vir_old);
+  PE = total_e(rx,ry,rz,vx,vy,vz,fx,fy,fz,N,L,rc2,ecor,ecut,dpd_gam,dpd_sigma,sqrt_dt,r,&vir_old);
   TE0=PE+KE;
   
   fprintf(stdout,"#LABELS step time PE KE TE drift T P\n");
@@ -370,7 +388,7 @@ int main ( int argc, char * argv[] ) {
       if (rz[i]>L)   { rz[i]-=L; iz[i]++; }
     }
     /* Calculate forces */
-    PE = total_e(rx,ry,rz,fx,fy,fz,N,L,rc2,ecor,ecut,&vir);
+    PE = total_e(rx,ry,rz,vx,vy,vz,fx,fy,fz,N,L,rc2,ecor,ecut,dpd_gam,dpd_sigma,sqrt_dt,r,&vir);
       
     /* Second integration half-step */
     KE = 0.0;
@@ -381,7 +399,6 @@ int main ( int argc, char * argv[] ) {
       KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
     }
     KE*=0.5;
-    KE=andersen(vx,vy,vz,N,and_nu,and_sigma,dt,r);
     TE=PE+KE;
     if (!(s%prog)) {
         fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",

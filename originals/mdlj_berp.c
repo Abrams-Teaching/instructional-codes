@@ -1,13 +1,13 @@
 /* 
    Molecular Dynamics simulation of a Lennard-Jones fluid
-   in a periodic boundary using an Andersen thermostat
+   in a periodic boundary using the Berendsen Barostat
 
    Cameron F. Abrams
 
-   Written for the course CHE T580, Modern Molecular Simulations
+   Written for the course CHE T580, Mddern Molecular Simulations
    Spring 2021
 
-   compile using "gcc -o mdlj_ber mdlj_ber.c -lm -lgsl"
+   compile using "gcc -o mdljberp mdlj_berp.c -lm -lgsl"
 
    You must have the GNU Scientific Library installed; see
    the coursenotes to learn how to do this.
@@ -29,14 +29,14 @@ void usage ( void ) {
   fprintf(stdout,"mdlj [options]\n\n");
   fprintf(stdout,"Options:\n");
   fprintf(stdout,"\t -N [integer]\t\tNumber of particles\n");
-  fprintf(stdout,"\t -isoKT [float]\t\tPerform isokinetic rescaling to this temperature\n");
-  fprintf(stdout,"\t -isoKi [integer]\t\tPerform isokinetic rescaling every i timesteps\n");
   fprintf(stdout,"\t -rho [real]\t\tNumber density\n");
   fprintf(stdout,"\t -dt [real]\t\tTime step\n");
   fprintf(stdout,"\t -rc [real]\t\tCutoff radius\n");
   fprintf(stdout,"\t -ns [real]\t\tNumber of integration steps\n");
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
   fprintf(stdout,"\t -fs [integer]\t\tSample frequency\n");
+  fprintf(stdout,"\t -berP [real]\t\tSetpoint Pressure\n");
+  fprintf(stdout,"\t -ber_tau [real]\t\tRise time of barostat\n");
   fprintf(stdout,"\t -traj [string]\t\tTrajectory file name\n");  
   fprintf(stdout,"\t -prog [integer]\tInterval with which logging output is generated\n");
   fprintf(stdout,"\t -icf [string]\t\tInitial configuration file\n");
@@ -88,21 +88,6 @@ int xyz_in (FILE * fp, double * rx, double * ry, double * rz,
     }
   }
   return has_vel;
-}
-
-double andersen ( double * vx, double * vy, double * vz, int N, double nu, double sigma, double dt, gsl_rng * r ) {
-  int i;
-  double KE = 0.0;
-  for (i=0;i<N;i++) {
-    if (gsl_rng_uniform(r) < nu*dt) {
-      vx[i]=gsl_ran_gaussian(r,sigma);
-      vy[i]=gsl_ran_gaussian(r,sigma);
-      vz[i]=gsl_ran_gaussian(r,sigma);
-      }
-    KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
-  }
-  KE*=0.5;
-  return KE;
 }
 
 /* An N^2 algorithm for computing forces and potential energy.  The virial
@@ -250,7 +235,7 @@ int main ( int argc, char * argv[] ) {
   double L=0.0;
   double rho=0.5;
   double rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
-  double PE, KE, TE, ecor, ecut, T0=1.0, TE0;
+  double PE, KE, TE, ecor, ecut, T0=1.0, TE0, P, berP=1.0, ber_tau=1.0, mu;
   double rr3,dt=0.001, dt2;
   int i,j,s;
   int nSteps = 10, fSamp=100;
@@ -262,20 +247,18 @@ int main ( int argc, char * argv[] ) {
   int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
-  double and_nu=0.0;
-  double and_sigma=0.0;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-and_nu")) and_nu=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-andT")) and_sigma=sqrt(atof(argv[++i]));
     else if (!strcmp(argv[i],"-dt")) dt=atof(argv[++i]);
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-T0")) T0=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-berP")) berP=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-ber_tau")) ber_tau=atof(argv[++i]);
     else if (!strcmp(argv[i],"-fs")) fSamp=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-traj")) traj_fn = argv[++i];
     else if (!strcmp(argv[i],"-icf")) init_cfg_file = argv[++i];
@@ -309,12 +292,12 @@ int main ( int argc, char * argv[] ) {
   dt2=dt*dt;
 
   /* Output some initial information */
-  fprintf(stdout,"# NVE MD Simulation of a Lennard-Jones fluid\n");
+  fprintf(stdout,"# Berendsen-Barostat MD Simulation of a Lennard-Jones fluid\n");
   fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf\n",
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nSteps %i, seed %ld, dt %.5lf\n",
 	  nSteps,Seed,dt);
-  fprintf(stdout,"# ecor %.5lf\n",ecor);
+  fprintf(stdout,"# Barostat tau=%.5lf P=%.5lf\n",ber_tau,berP);
   
   /* Seed the random number generator */
   gsl_rng_set(r,Seed);
@@ -350,7 +333,7 @@ int main ( int argc, char * argv[] ) {
   PE = total_e(rx,ry,rz,fx,fy,fz,N,L,rc2,ecor,ecut,&vir_old);
   TE0=PE+KE;
   
-  fprintf(stdout,"#LABELS step time PE KE TE drift T P\n");
+  fprintf(stdout,"#LABELS step time PE KE TE drift T P rho\n");
 
   for (s=0;s<nSteps;s++) {
     /* First integration half-step */
@@ -381,11 +364,22 @@ int main ( int argc, char * argv[] ) {
       KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
     }
     KE*=0.5;
-    KE=andersen(vx,vy,vz,N,and_nu,and_sigma,dt,r);
+        /* Berendsen barostat */
+    P = rho*KE*2./3./N+vir/3.0/V;
+    mu = pow((1-dt/ber_tau*(berP-P)),0.33333333333);
+    for (i=0;i<N;i++) {
+      rx[i]*=mu;
+      ry[i]*=mu;
+      rz[i]*=mu;
+    }
+    L*=mu;
+    rho=N/(V=L*L*L);
+    ecor = use_e_corr?8*M_PI*rho*(rr3*rr3*rr3/9.0-rr3/3.0):0.0;
+    pcor = use_e_corr?16.0/3.0*M_PI*rho*rho*(2./3.*rr3*rr3*rr3-rr3):0.0;
     TE=PE+KE;
     if (!(s%prog)) {
-        fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
-	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V+pcor);
+        fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf %.5lf\n",
+	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V+pcor,rho);
         fflush(stdout);
     }
     if (!(s%fSamp)&&traj_fn) {

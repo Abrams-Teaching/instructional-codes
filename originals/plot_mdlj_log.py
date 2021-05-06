@@ -37,8 +37,10 @@ parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axi
 parser.add_argument("-o",default='out.png',type=str,help="output file name")
 parser.add_argument("-N",default=1,type=int,help="number of particles")
 parser.add_argument("-show-column-labels",default=False,action='store_true',help="show column labels")
+parser.add_argument("-xlog",default=False,action='store_true',help="make x axis log scale")
 parser.add_argument("-do-flyvberg",default=False,action='store_true',help="Do Flyvberg analysis")
 parser.add_argument("-divide-by-N",default=False,action='store_true',help="what do you think?")
+parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what do you think?")
 args=parser.parse_args()
 
 if len(args.logs)==0:
@@ -72,8 +74,8 @@ for log in args.logs:
     pdat[log]=[x,y]
 
 fig,ax=plt.subplots(1,1,figsize=(6,4))
-
-
+if args.xlog:
+    ax.set_xscale('log')
 if len(args.labels)>0:
     plot_labels=args.labels
 print("N sig_T/<T>^2")
@@ -83,7 +85,10 @@ for log,label in zip(args.logs,plot_labels):
     for y in yy:
         relfluc=y[len(y)//5:].var()/(y[len(y)//5:].mean()**2)*args.N
         print('{:.3f}'.format(relfluc))
-        ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}, $N\langle T^2\rangle/\langle T\rangle^2$ = {:.4f}'.format(label,relfluc))
+        if args.fluc_in_leg:
+            ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}, $N\langle T^2\rangle/\langle T\rangle^2$ = {:.4f}'.format(label,relfluc))
+        else:
+            ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}'.format(label))
         if args.do_flyvberg:
             n,m,s=flyberg(y/args.N)
 

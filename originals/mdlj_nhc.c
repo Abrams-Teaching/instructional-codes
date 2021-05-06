@@ -1,16 +1,15 @@
 /* 
    Molecular Dynamics simulation of a Lennard-Jones fluid
-   in a periodic boundary using an Andersen thermostat
+   in a periodic boundary using the Nose-Hoover chain thermostat
 
    Cameron F. Abrams
 
-   Written for the course CHE T580, Modern Molecular Simulations
+   Written for the course CHE T580, Mddern Molecular Simulations
    Spring 2021
 
-   compile using "gcc -o mdlj_ber mdlj_ber.c -lm -lgsl"
+   compile using "gcc -o mdlj_nhc mdlj_nhc.c -lm -lgsl"
 
-   You must have the GNU Scientific Library installed; see
-   the coursenotes to learn how to do this.
+   You must have the GNU Scientific Library installed.
 
    Drexel University, Department of Chemical Engineering
    Philadelphia
@@ -29,13 +28,13 @@ void usage ( void ) {
   fprintf(stdout,"mdlj [options]\n\n");
   fprintf(stdout,"Options:\n");
   fprintf(stdout,"\t -N [integer]\t\tNumber of particles\n");
-  fprintf(stdout,"\t -isoKT [float]\t\tPerform isokinetic rescaling to this temperature\n");
-  fprintf(stdout,"\t -isoKi [integer]\t\tPerform isokinetic rescaling every i timesteps\n");
   fprintf(stdout,"\t -rho [real]\t\tNumber density\n");
   fprintf(stdout,"\t -dt [real]\t\tTime step\n");
   fprintf(stdout,"\t -rc [real]\t\tCutoff radius\n");
   fprintf(stdout,"\t -ns [real]\t\tNumber of integration steps\n");
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
+  fprintf(stdout,"\t -nhcT [real]\t\tSetpoint temperature\n");
+  fprintf(stdout,"\t -nhcQ [real,real]\t\tThermostat masses (2)\n");  
   fprintf(stdout,"\t -fs [integer]\t\tSample frequency\n");
   fprintf(stdout,"\t -traj [string]\t\tTrajectory file name\n");  
   fprintf(stdout,"\t -prog [integer]\tInterval with which logging output is generated\n");
@@ -88,21 +87,6 @@ int xyz_in (FILE * fp, double * rx, double * ry, double * rz,
     }
   }
   return has_vel;
-}
-
-double andersen ( double * vx, double * vy, double * vz, int N, double nu, double sigma, double dt, gsl_rng * r ) {
-  int i;
-  double KE = 0.0;
-  for (i=0;i<N;i++) {
-    if (gsl_rng_uniform(r) < nu*dt) {
-      vx[i]=gsl_ran_gaussian(r,sigma);
-      vy[i]=gsl_ran_gaussian(r,sigma);
-      vz[i]=gsl_ran_gaussian(r,sigma);
-      }
-    KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
-  }
-  KE*=0.5;
-  return KE;
 }
 
 /* An N^2 algorithm for computing forces and potential energy.  The virial
@@ -241,10 +225,42 @@ void init ( double * rx, double * ry, double * rz,
   memset(iz,0,n*sizeof(int));
 }
 
+/* Chain half integration step (Algorithm 30) */
+void chain ( double * KE, double dt, double dt_2,
+	     double dt_4, double dt_8,
+	     double * Q, double * xi, double * vxi,
+	     double * vx, double * vy, double * vz,
+	     int nl, int N, double T) {
+  double G1, G2, s;
+  int i;
+
+  G2= (Q[0]*vxi[0]*vxi[0]-T);
+  vxi[1]+=G2*dt_4;
+  vxi[0]*=exp(-vxi[1]*dt_8);
+  G1=(2*(*KE)-3*N*T)/Q[0];
+  vxi[0]+=G1*dt_4;
+  vxi[0]*=exp(-vxi[1]*dt_8);
+  xi[0]+=vxi[0]*dt_2;
+  xi[1]+=vxi[1]*dt_2;
+  s=exp(-vxi[0]*dt_2);
+  for (i=0;i<N;i++) {
+    vx[i]*=s; vy[i]*=s; vz[i]*=s;
+  }
+  (*KE)*=(s*s);
+  vxi[0]*=exp(-vxi[1]*dt_8);
+  G1=(2*(*KE)-3*N*T)/Q[0];
+  vxi[0]+=G1*dt_4;
+  vxi[0]*=exp(-vxi[1]*dt_8);
+  G2=(Q[0]*vxi[0]*vxi[0]-T)/Q[1];
+  vxi[1]+=G2*dt_4;
+}
+
 int main ( int argc, char * argv[] ) {
   double * rx, * ry, * rz;
   double * vx, * vy, * vz;
   double * fx, * fy, * fz;
+  int nl;
+  double * xi, * vxi, * Q;
   int * ix, * iy, * iz;
   int N=216,c,a;
   double L=0.0;
@@ -252,6 +268,7 @@ int main ( int argc, char * argv[] ) {
   double rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
   double PE, KE, TE, ecor, ecut, T0=1.0, TE0;
   double rr3,dt=0.001, dt2;
+  double dt_2, dt_4, dt_8, sigma, nhcT=2.0, Qdum1=0.1, Qdum2=0.1;
   int i,j,s;
   int nSteps = 10, fSamp=100;
   int use_e_corr=0;
@@ -262,16 +279,12 @@ int main ( int argc, char * argv[] ) {
   int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
-  double and_nu=0.0;
-  double and_sigma=0.0;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
   for (i=1;i<argc;i++) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-and_nu")) and_nu=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-andT")) and_sigma=sqrt(atof(argv[++i]));
     else if (!strcmp(argv[i],"-dt")) dt=atof(argv[++i]);
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
@@ -283,6 +296,9 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-seed")) Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-uf")) unfold = 1;
     else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-nhcT")) nhcT = atof(argv[++i]);
+    else if (!strcmp(argv[i],"-nhcQ")) sscanf(argv[++i],"%lf,%lf",
+          &Qdum1,&Qdum2);
     else if (!strcmp(argv[i],"-h")) {
       usage(); exit(0);
     }
@@ -308,16 +324,32 @@ int main ( int argc, char * argv[] ) {
   /* compute the squared time step */
   dt2=dt*dt;
 
+  dt_2 = 0.5*dt;
+  dt_4 = 0.5*dt_2;
+  dt_8 = 0.5*dt_4;  // thanks, jgrime@uchicago.edu
+
+  /* Compute sigma */
+  sigma = sqrt(nhcT);
+
   /* Output some initial information */
-  fprintf(stdout,"# NVE MD Simulation of a Lennard-Jones fluid\n");
+  fprintf(stdout,"# NVT MD Simulation of a Lennard-Jones fluid\n");
   fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf\n",
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nSteps %i, seed %ld, dt %.5lf\n",
 	  nSteps,Seed,dt);
-  fprintf(stdout,"# ecor %.5lf\n",ecor);
+  fprintf(stdout,"# Nose-Hoover Chain Q1 %.5lf Q2 %.5lf T %.5lf\n",Qdum1,Qdum2,nhcT);
   
   /* Seed the random number generator */
   gsl_rng_set(r,Seed);
+
+  /* Allocate arrays for the NH Chain */
+  nl = 2;  /* for now... */
+  xi = (double*)malloc(nl*sizeof(double));
+  vxi = (double*)malloc(nl*sizeof(double));
+  Q = (double*)malloc(nl*sizeof(double));
+  /* Default masses */
+  Q[0] = Qdum1;
+  Q[1] = Qdum2;
   
   /* Allocate the position arrays */
   rx = (double*)malloc(N*sizeof(double));
@@ -353,6 +385,7 @@ int main ( int argc, char * argv[] ) {
   fprintf(stdout,"#LABELS step time PE KE TE drift T P\n");
 
   for (s=0;s<nSteps;s++) {
+    chain(&KE,dt,dt_2,dt_4,dt_8,Q,xi,vxi,vx,vy,vz,nl,N,nhcT);
     /* First integration half-step */
     for (i=0;i<N;i++) {
       rx[i]+=vx[i]*dt+0.5*dt2*fx[i];
@@ -381,7 +414,7 @@ int main ( int argc, char * argv[] ) {
       KE+=vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i];
     }
     KE*=0.5;
-    KE=andersen(vx,vy,vz,N,and_nu,and_sigma,dt,r);
+    chain(&KE,dt,dt_2,dt_4,dt_8,Q,xi,vxi,vx,vy,vz,nl,N,nhcT);
     TE=PE+KE;
     if (!(s%prog)) {
         fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
