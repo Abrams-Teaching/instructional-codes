@@ -1,0 +1,25 @@
+#! /bin/csh -f
+#
+# Conventional MD To Compute C(T)
+#
+# Upath     = Total Energy
+# H         = Height Of The Energy Barrier
+# Tstep     = Timestep Integration
+# Lmin/Lmax = Boundaries For Umbrella Sampling
+# Lensemble = Do We Use TPS ?
+
+
+set nstep  = 10000000
+
+cat > input1 <<endofdata
+Nstep      Lscreen
+$nstep     .False.
+Lensemble  Tstep 
+.False.    0.001d0
+Upath      H          Lmin    Lmax
+9.0d0      2.0d0      1.3d0   1.4d0
+endofdata
+
+../Source/tps > outt
+
+exit

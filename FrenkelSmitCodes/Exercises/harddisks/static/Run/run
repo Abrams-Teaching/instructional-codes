@@ -1,0 +1,8 @@
+#! /bin/csh -f
+#
+
+time ../Source/hard1
+
+mv fort.21 gyra1
+
+exit

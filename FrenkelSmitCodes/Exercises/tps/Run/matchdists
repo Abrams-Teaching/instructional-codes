@@ -1,0 +1,53 @@
+#!/bin/tcsh
+
+# Script for automatically matching histrograms and normalizing
+#
+# assumes histograms for each window are ordered consecutively 
+# with respect tcsh's wildcard expansion ordering rules
+# 
+# noverlap is the number of lines of overlap between adjacent histograms
+#
+# filename format is assumed to be umbr*dat
+#
+# generates the file HIST which is the normalized total histogram
+#
+# uses a program called 'splice' (see splice.c)
+#
+# (c) 2004 cameron f abrams
+#
+@ noverlap = 10
+set files = (`echo umbr*dat`)
+set nf=$#files
+# work with "working files" without disturbing the originals
+foreach f ($files)
+ cp $f $f.wk
+end
+set files = (`echo umbr*dat.wk`) 
+# put the first window into the total file
+@ n = 1
+cat $files[$n] > HIST
+cat $files[$n] > HIST-unmatched
+while ($n < $nf) 
+  @ n1 = $n + 1
+  tail -$noverlap $files[$n] > .tmp.${n}
+  head -$noverlap $files[$n1] > .tmp.${n1}
+  # splice creates the three-column file of the region of overlap
+  splice -fmt "%.7le" .tmp.${n} .tmp.${n1} > .tmp2.${n}
+  set s1=`cat .tmp2.${n} | awk 'BEGIN{s=0.0;}{s+=$2*$3;}END{printf("%.7le\n",s);}'`
+  set s2=`cat .tmp2.${n} | awk 'BEGIN{s=0.0;}{s+=$3*$3;}END{printf("%.7le\n",s);}'`
+  set lam=`echo $s1 $s2 | awk '{printf("%.7le\n",$1/$2);}'`
+  echo Matching $files[$n] to $files[$n1] by matching factor $lam
+  cat $files[$n1] | \
+    awk 'BEGIN{l=0.0e0;}{printf(" %i %.7le \n",$1,$2*l);}' l=$lam > .tmp.${n1}.shift
+  @ nl = `wc .tmp.${n1}.shift | awk '{print $1}'`
+  @ nlo = $nl - $noverlap
+  tail -$nlo  .tmp.${n1}.shift >> HIST
+  tail -$nlo $files[$n1] >> HIST-unmatched
+  cp .tmp.${n1}.shift $files[$n1]
+  @ n = $n1
+end
+set N = `cat HIST | awk 'BEGIN{s=0.0;}{s+=$2;}END{printf("%.7le\n",s);}'`
+cat HIST | awk 'BEGIN{l=0.0;}{printf(" %i %.7le\n",$1,$2/l);}' l=$N > .tmp.HIST
+mv .tmp.HIST HIST; rm .tmp.*
+
+ 

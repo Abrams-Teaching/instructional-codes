@@ -1,0 +1,6 @@
+Nstep      Lscreen
+10000000     .False.
+Lensemble  Tstep 
+.False.    0.001d0
+Upath      H          Lmin    Lmax
+9.0d0      2.0d0      1.3d0   1.4d0

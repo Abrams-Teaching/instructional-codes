@@ -4,6 +4,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse as ap
+import statsmodels.api as sm
+lowess = sm.nonparametric.lowess
 
 def block ( A ):
     Ab=[]
@@ -41,6 +43,7 @@ parser.add_argument("-xlog",default=False,action='store_true',help="make x axis 
 parser.add_argument("-do-flyvberg",default=False,action='store_true',help="Do Flyvberg analysis")
 parser.add_argument("-divide-by-N",default=False,action='store_true',help="what do you think?")
 parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what do you think?")
+parser.add_argument("-every",default=1,type=int,help="only plot every # points")
 args=parser.parse_args()
 
 if len(args.logs)==0:
@@ -78,19 +81,30 @@ if args.xlog:
     ax.set_xscale('log')
 if len(args.labels)>0:
     plot_labels=args.labels
-print("N sig_T/<T>^2")
 for log,label in zip(args.logs,plot_labels):
     x,yy=pdat[log]
 
     for y in yy:
-        relfluc=y[len(y)//5:].var()/(y[len(y)//5:].mean()**2)*args.N
-        print('{:.3f}'.format(relfluc))
+        relfluc=y[len(y)//2:].var()/(y[len(y)//2:].mean()**2)*args.N
+#        print('{:.3f}'.format(relfluc))
+        if args.divide_by_N:
+            y/=args.N
+        raw_alpha=0
+        if args.every>1:
+            lowessfrac=args.every/len(y)
+            smres=lowess(y,x,frac=lowessfrac)
+            plot_x=smres[:,0]
+            plot_y=smres[:,1]
+            raw_alpha=0.5
         if args.fluc_in_leg:
-            ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}, $N\langle T^2\rangle/\langle T\rangle^2$ = {:.4f}'.format(label,relfluc))
+            label+=', {:.3f}'.format(relfluc)
+        if args.every>1:
+            ax.plot(plot_x,plot_y,alpha=1,label=r'{:s}'.format(label))
+            ax.plot(x,y,alpha=raw_alpha)
         else:
-            ax.plot(x,y/(args.N if args.divide_by_N else 1),label=r'{:s}'.format(label))
+            ax.plot(x,y,alpha=raw_alpha,label=r'{:s}'.format(label))
         if args.do_flyvberg:
-            n,m,s=flyberg(y/args.N)
+            n,m,s=flyberg(y)
 
 if len(col_labels)>0:
     ax.set_xlabel(col_labels[1])

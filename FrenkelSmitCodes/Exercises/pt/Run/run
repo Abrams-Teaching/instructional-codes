@@ -1,0 +1,24 @@
+#!/bin/csh -f
+#
+# nstep = number of cycles
+# rho   = density
+# ppt   = fraction of exchanges
+# ntemp = number of temperatures (systems)
+
+set nstep = 5000
+set rho   = 2.5d0
+set ppt   = 0.2d0
+set ntemp = 1
+
+cat > fort.21 << endofdata
+Rho  Ppt   Nstep   Ntemp
+$rho $ppt  $nstep  $ntemp
+Temperatures
+0.001d0
+endofdata
+
+../Source/pt > outt
+
+rm fort.21
+
+exit

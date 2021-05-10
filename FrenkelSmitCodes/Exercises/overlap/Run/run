@@ -1,0 +1,48 @@
+#! /bin/csh -f
+#
+# OVERLAPPING DISTRIBUTION METHOD USING CBMC
+#
+# NCYCLE  = NUMBER OF CYCLES
+# NPART   = NUMBER OF MONOMERS
+# BOX     = BOXSIZE
+# ALPHA   = REPULSION PARAMETER
+# BETA    = 1/(K_B T)
+# DISPMAX = MAXIMUM DISPLACEMENT
+# NCHOI   = NUMBER OF TRIAL DIRECTIONS FOR CBMC
+# NLENGTH = LENGTH OF (TRIAL) CHAIN
+# PCHAIN  = PROBABILITY TO DO CBMC (ONLY WHEN CHAIN IS PRESENT)
+# LCHAIN  = DO WE HAVE A CHAIN IN THE SYSTEM OR DO WE USE TRIAL CHAINS ?
+
+set NCYCLE  = 2000
+set NPART   = 100
+set BOX     = 4.0d0
+set ALPHA   = 5.0d0
+set BETA    = 2.0d0
+set DISPMAX = 0.7d0
+set NCHOI   = 5
+set NLENGTH = 5
+set PCHAIN  = 0.3d0
+set LCHAIN  = .True.
+
+foreach LCHAIN(.true. .false.)
+
+cat > fort.21 <<endofdata
+$NPART $NCYCLE $BOX $ALPHA $BETA $DISPMAX $NCHOI $NLENGTH $LCHAIN $PCHAIN
+endofdata
+
+time ../Source/overdist > out.${LCHAIN}
+
+rm fort.21
+
+end
+
+# analyse the results
+
+../Source/analyse
+
+mv fort.32 f0.dat
+mv fort.33 f1.dat
+mv fort.34 f01.dat
+rm fort.*
+
+exit

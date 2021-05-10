@@ -1,0 +1,22 @@
+#!/usr/bin/gnuplot
+set encoding iso_8859_1
+
+set out "avhb_h=2.eps"
+
+set term post eps enh color "Helvetica" 32
+
+set size square 1.2
+f(x)= a*x+b
+
+b=0.1
+a=0.1
+
+fit [x=1.5:5] f(x) "avhb.dat" via a,b
+set nokey
+set xlabel "t ({/Symbol t})"
+set ylabel "{/Symbol\341}h_B{/Symbol\361}(t)"
+set xtics 0,1,5
+p "avhb.dat" u 1:2 w l, f(x)
+
+
+

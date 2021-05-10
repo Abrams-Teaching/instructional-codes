@@ -278,7 +278,7 @@ int write_hist(char * outfile, int * H, double bs, double xmin, double xmax, cha
       i++;
   }
   fclose(out);
-  //fprintf(stdout,"%s created.\n",outfile);
+  fprintf(stdout,"# %s created.\n",outfile);
   return 0;
 }
 /* update velocity histogram that is symmetric about 0 [-vmax,vmax] */
@@ -300,6 +300,7 @@ int update_ehist ( double E, int * eHist, double ebs, double emin, double emax )
     result = binit(E,eHist,ebs,emin,emax);
     return result;
 }
+
 int main ( int argc, char * argv[] ) {
   double * rx, * ry, * rz;
   double * vx, * vy, * vz;
@@ -325,10 +326,10 @@ int main ( int argc, char * argv[] ) {
   int isoKi=0;
   double vbs=0.01,vmax=100.0, v;
   int * vHist, histsum;
-  char * vdoutfile="vdf.dat";
+  char * vdoutfile=NULL;
   double ebs=1.0,emin=0,emax=12,e;
   int * eHist;
-  char * edoutfile="edf.dat";
+  char * edoutfile=NULL;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
@@ -366,9 +367,9 @@ int main ( int argc, char * argv[] ) {
   }
 
   /* Allocate velocity histogram */
-  vHist=allocate_hist(vbs,-vmax,vmax);
+  if (vdoutfilev) Hist=allocate_hist(vbs,-vmax,vmax);
   /* Allocate energy-per-partile histogram */
-  eHist=allocate_hist(ebs,emin,emax);
+  if (edoutfile) eHist=allocate_hist(ebs,emin,emax);
 
   /* Compute the side-length */
   L = pow((V=N/rho),0.3333333);
@@ -467,8 +468,8 @@ int main ( int argc, char * argv[] ) {
       KE*=0.5;
     }
     TE=PE+KE;
-    update_vhist(vx,vy,vz,N,vHist,vbs,vmax);
-    update_ehist(KE,eHist,ebs,emin,emax);
+    if (vHist) update_vhist(vx,vy,vz,N,vHist,vbs,vmax);
+    if (eHist) update_ehist(KE,eHist,ebs,emin,emax);
     if (!(s%prog)) {
         fprintf(stdout,"%i %.5lf %.5lf %.5lf %.5lf % 12.5le %.5lf %.5lf\n",
 	        s,s*dt,PE,KE,TE,(TE-TE0)/TE0,KE*2/3./N,rho*KE*2./3./N+vir/3.0/V+pcor);
@@ -480,7 +481,7 @@ int main ( int argc, char * argv[] ) {
       fclose(out);
     }
   }
-  write_hist(vdoutfile,vHist,vbs,-vmax,vmax,"v freq");
-  write_hist(edoutfile,eHist,ebs,emin,emax,"e/n freq");
-
+  if (traj_fn) fprintf(stdout,"# %s created.\n",traj_fn)
+  if (vdoutfile) write_hist(vdoutfile,vHist,vbs,-vmax,vmax,"v freq");
+  if (edoutfile) write_hist(edoutfile,eHist,ebs,emin,emax,"e/n freq");
 }

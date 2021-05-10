@@ -1,0 +1,9 @@
+#! /bin/csh -f
+#
+
+time ../Source/hard2
+
+mv fort.21 gyra2
+mv fort.22 movie.pdb
+
+exit

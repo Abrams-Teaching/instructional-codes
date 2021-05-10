@@ -1,0 +1,148 @@
+
+
+ Path Ensemble Sampling; Written By Thijs J.H. Vlugt
+
+ Initial Seed                           :  1252
+ Random Number                          :   0.620174344
+
+
+
+
+ Total Number Of Atoms                  :  15
+ Number Of Interactions                 :  104
+ Radius                                 :   3.
+ Density                                :   0.530516477
+ W                                      :   0.25
+ H                                      :   2.
+ Total Energy                           :   9.
+ Total Number Of Cycles                 :  10000000
+ Steps In A Cycle                       :  5
+ Time Step                              :   0.001
+ Left  (Region A)                       :   1.3
+ Right (Region B)                       :   1.45
+ Lmin                                   :   1.3
+ Lmax                                   :   1.4
+
+
+
+ Start Of The Md Simulation
+
+ Total Energy                           :   8.4112
+ Potential Energy                       :   1.4112
+ Kinetic Energy                         :   7.
+
+
+ Fraction Spend In A,B, Energy          :  0.86925333E+00 0.12153333E+00 0.84101911E+01
+ Fraction Spend In A,B, Energy          :  0.66668000E+00 0.32162857E+00 0.84097670E+01
+ Fraction Spend In A,B, Energy          :  0.69903636E+00 0.29033818E+00 0.84099211E+01
+ Fraction Spend In A,B, Energy          :  0.72929333E+00 0.25906933E+00 0.84096646E+01
+ Fraction Spend In A,B, Energy          :  0.73255789E+00 0.25554316E+00 0.84095787E+01
+ Fraction Spend In A,B, Energy          :  0.70215130E+00 0.28582609E+00 0.84101896E+01
+ Fraction Spend In A,B, Energy          :  0.71234815E+00 0.27655407E+00 0.84101427E+01
+ Fraction Spend In A,B, Energy          :  0.67892129E+00 0.30908774E+00 0.84097214E+01
+ Fraction Spend In A,B, Energy          :  0.69025143E+00 0.29733600E+00 0.84102362E+01
+ Fraction Spend In A,B, Energy          :  0.67830974E+00 0.30863487E+00 0.84090719E+01
+ Fraction Spend In A,B, Energy          :  0.66530605E+00 0.32139163E+00 0.84098032E+01
+ Fraction Spend In A,B, Energy          :  0.65669362E+00 0.33059149E+00 0.84093356E+01
+ Fraction Spend In A,B, Energy          :  0.67013020E+00 0.31743686E+00 0.84098519E+01
+ Fraction Spend In A,B, Energy          :  0.66802473E+00 0.31955709E+00 0.84094740E+01
+ Fraction Spend In A,B, Energy          :  0.65885559E+00 0.32798237E+00 0.84091204E+01
+ Fraction Spend In A,B, Energy          :  0.64728889E+00 0.33955937E+00 0.84092948E+01
+ Fraction Spend In A,B, Energy          :  0.64605254E+00 0.34079045E+00 0.84087598E+01
+ Fraction Spend In A,B, Energy          :  0.64125408E+00 0.34561521E+00 0.84082630E+01
+ Fraction Spend In A,B, Energy          :  0.63290347E+00 0.35374827E+00 0.84087315E+01
+ Fraction Spend In A,B, Energy          :  0.62012506E+00 0.36704456E+00 0.84098287E+01
+ Fraction Spend In A,B, Energy          :  0.61197735E+00 0.37503470E+00 0.84100069E+01
+ Fraction Spend In A,B, Energy          :  0.61009011E+00 0.37642345E+00 0.84098690E+01
+ Fraction Spend In A,B, Energy          :  0.60208615E+00 0.38410418E+00 0.84095596E+01
+ Fraction Spend In A,B, Energy          :  0.58892800E+00 0.39725853E+00 0.84096916E+01
+ Fraction Spend In A,B, Energy          :  0.59232242E+00 0.39409859E+00 0.84096548E+01
+ Fraction Spend In A,B, Energy          :  0.59701320E+00 0.38960583E+00 0.84086366E+01
+ Fraction Spend In A,B, Energy          :  0.58512374E+00 0.40155514E+00 0.84092760E+01
+ Fraction Spend In A,B, Energy          :  0.59097586E+00 0.39574378E+00 0.84089541E+01
+ Fraction Spend In A,B, Energy          :  0.57837322E+00 0.40842852E+00 0.84079197E+01
+ Fraction Spend In A,B, Energy          :  0.58318992E+00 0.40362017E+00 0.84066318E+01
+ Fraction Spend In A,B, Energy          :  0.56929236E+00 0.41746472E+00 0.84065066E+01
+ Fraction Spend In A,B, Energy          :  0.55984472E+00 0.42649827E+00 0.84064433E+01
+ Fraction Spend In A,B, Energy          :  0.55972733E+00 0.42636977E+00 0.84055258E+01
+ Fraction Spend In A,B, Energy          :  0.55668267E+00 0.42944207E+00 0.84056808E+01
+ Fraction Spend In A,B, Energy          :  0.56326388E+00 0.42309899E+00 0.84056791E+01
+ Fraction Spend In A,B, Energy          :  0.56893734E+00 0.41767217E+00 0.84064097E+01
+ Fraction Spend In A,B, Energy          :  0.56466095E+00 0.42178612E+00 0.84072501E+01
+ Fraction Spend In A,B, Energy          :  0.56086172E+00 0.42564265E+00 0.84078445E+01
+ Fraction Spend In A,B, Energy          :  0.56738761E+00 0.41912645E+00 0.84070893E+01
+ Fraction Spend In A,B, Energy          :  0.56510792E+00 0.42132906E+00 0.84061708E+01
+ Fraction Spend In A,B, Energy          :  0.55620859E+00 0.43022847E+00 0.84073652E+01
+ Fraction Spend In A,B, Energy          :  0.54930970E+00 0.43711689E+00 0.84075486E+01
+ Fraction Spend In A,B, Energy          :  0.53756538E+00 0.44891743E+00 0.84077033E+01
+ Fraction Spend In A,B, Energy          :  0.54093851E+00 0.44548823E+00 0.84068188E+01
+ Fraction Spend In A,B, Energy          :  0.54303709E+00 0.44326324E+00 0.84068240E+01
+ Fraction Spend In A,B, Energy          :  0.55108984E+00 0.43540087E+00 0.84067112E+01
+ Fraction Spend In A,B, Energy          :  0.54907059E+00 0.43731209E+00 0.84055608E+01
+ Fraction Spend In A,B, Energy          :  0.55192147E+00 0.43424984E+00 0.84057867E+01
+ Fraction Spend In A,B, Energy          :  0.55617908E+00 0.43009990E+00 0.84055429E+01
+ Fraction Spend In A,B, Energy          :  0.55728302E+00 0.42890432E+00 0.84041756E+01
+ Fraction Spend In A,B, Energy          :  0.56011369E+00 0.42605222E+00 0.84042661E+01
+ Fraction Spend In A,B, Energy          :  0.55483710E+00 0.43126357E+00 0.84037334E+01
+ Fraction Spend In A,B, Energy          :  0.56092227E+00 0.42526559E+00 0.84028387E+01
+ Fraction Spend In A,B, Energy          :  0.55845823E+00 0.42773005E+00 0.84025999E+01
+ Fraction Spend In A,B, Energy          :  0.56101132E+00 0.42519616E+00 0.84025811E+01
+ Fraction Spend In A,B, Energy          :  0.56820108E+00 0.41812879E+00 0.84029048E+01
+ Fraction Spend In A,B, Energy          :  0.56914996E+00 0.41725938E+00 0.84037161E+01
+ Fraction Spend In A,B, Energy          :  0.57547307E+00 0.41111810E+00 0.84027223E+01
+ Fraction Spend In A,B, Energy          :  0.57342468E+00 0.41319166E+00 0.84027317E+01
+ Fraction Spend In A,B, Energy          :  0.56725724E+00 0.41939766E+00 0.84020707E+01
+ Fraction Spend In A,B, Energy          :  0.57101728E+00 0.41557613E+00 0.84024837E+01
+ Fraction Spend In A,B, Energy          :  0.57454008E+00 0.41215077E+00 0.84033929E+01
+ Fraction Spend In A,B, Energy          :  0.57977530E+00 0.40692303E+00 0.84053774E+01
+ Fraction Spend In A,B, Energy          :  0.57412031E+00 0.41262337E+00 0.84057924E+01
+ Fraction Spend In A,B, Energy          :  0.57617313E+00 0.41056479E+00 0.84055288E+01
+ Fraction Spend In A,B, Energy          :  0.57567772E+00 0.41109247E+00 0.84057895E+01
+ Fraction Spend In A,B, Energy          :  0.57631521E+00 0.41037933E+00 0.84055067E+01
+ Fraction Spend In A,B, Energy          :  0.57308797E+00 0.41342066E+00 0.84062533E+01
+ Fraction Spend In A,B, Energy          :  0.57536058E+00 0.41102676E+00 0.84061693E+01
+ Fraction Spend In A,B, Energy          :  0.58072516E+00 0.40578409E+00 0.84071841E+01
+ Fraction Spend In A,B, Energy          :  0.57919972E+00 0.40735689E+00 0.84075199E+01
+ Fraction Spend In A,B, Energy          :  0.57800725E+00 0.40854425E+00 0.84080672E+01
+ Fraction Spend In A,B, Energy          :  0.58060687E+00 0.40600220E+00 0.84085726E+01
+ Fraction Spend In A,B, Energy          :  0.58495471E+00 0.40165654E+00 0.84078786E+01
+ Fraction Spend In A,B, Energy          :  0.58882288E+00 0.39778528E+00 0.84063607E+01
+ Fraction Spend In A,B, Energy          :  0.58820304E+00 0.39840185E+00 0.84054108E+01
+ Fraction Spend In A,B, Energy          :  0.59070984E+00 0.39589824E+00 0.84053585E+01
+ Fraction Spend In A,B, Energy          :  0.58941633E+00 0.39717968E+00 0.84059900E+01
+ Fraction Spend In A,B, Energy          :  0.59214971E+00 0.39446171E+00 0.84056650E+01
+ Fraction Spend In A,B, Energy          :  0.58942520E+00 0.39726884E+00 0.84056865E+01
+ Fraction Spend In A,B, Energy          :  0.59029734E+00 0.39644991E+00 0.84070319E+01
+ Fraction Spend In A,B, Energy          :  0.58931535E+00 0.39734679E+00 0.84070573E+01
+ Fraction Spend In A,B, Energy          :  0.59110356E+00 0.39560242E+00 0.84081453E+01
+ Fraction Spend In A,B, Energy          :  0.59217134E+00 0.39439499E+00 0.84076512E+01
+ Fraction Spend In A,B, Energy          :  0.59382879E+00 0.39272378E+00 0.84068553E+01
+ Fraction Spend In A,B, Energy          :  0.59018519E+00 0.39638087E+00 0.84068734E+01
+ Fraction Spend In A,B, Energy          :  0.59037372E+00 0.39626398E+00 0.84070910E+01
+ Fraction Spend In A,B, Energy          :  0.59217550E+00 0.39451168E+00 0.84062781E+01
+ Fraction Spend In A,B, Energy          :  0.59188608E+00 0.39484034E+00 0.84066606E+01
+ Fraction Spend In A,B, Energy          :  0.59211744E+00 0.39462184E+00 0.84064915E+01
+ Fraction Spend In A,B, Energy          :  0.58983416E+00 0.39695405E+00 0.84060619E+01
+ Fraction Spend In A,B, Energy          :  0.59144785E+00 0.39543346E+00 0.84061788E+01
+ Fraction Spend In A,B, Energy          :  0.59285111E+00 0.39408216E+00 0.84063247E+01
+ Fraction Spend In A,B, Energy          :  0.59146325E+00 0.39543627E+00 0.84062454E+01
+ Fraction Spend In A,B, Energy          :  0.58995504E+00 0.39700422E+00 0.84059201E+01
+ Fraction Spend In A,B, Energy          :  0.59166151E+00 0.39530402E+00 0.84050236E+01
+ Fraction Spend In A,B, Energy          :  0.59452568E+00 0.39241550E+00 0.84060693E+01
+ Fraction Spend In A,B, Energy          :  0.59669105E+00 0.39023816E+00 0.84062032E+01
+ Fraction Spend In A,B, Energy          :  0.59528891E+00 0.39162066E+00 0.84051496E+01
+ Fraction Spend In A,B, Energy          :  0.59284602E+00 0.39396802E+00 0.84061078E+01
+
+
+ End Of The Md Simulation
+
+ F Total Energy                         :   8.40610776
+ F Drift                                :   0.000506310325
+ F Kinetic Energy                       :   7.79579937
+ F Potential                            :   0.610308388
+
+
+ Fraction Spend In A,B, Energy          :  0.59284602E+00 0.39396802E+00 0.84061078E+01
+
+ The Program Ended Normally
+

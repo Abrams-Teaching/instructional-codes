@@ -33,6 +33,7 @@ void usage ( void ) {
   fprintf(stdout,"\t -dt [real]\t\tTime step\n");
   fprintf(stdout,"\t -dpdT [real]\t\tSetpoint temperature\n");
   fprintf(stdout,"\t -dpd_gam [real]\t\tDPD Gamma\n");
+  fprintf(stdout,"\t -Tjump [integer],[real]\t\tJump to temperature at a time step\n");
   fprintf(stdout,"\t -rc [real]\t\tCutoff radius\n");
   fprintf(stdout,"\t -ns [real]\t\tNumber of integration steps\n");
   fprintf(stdout,"\t -T0 [real]\t\tInitial temperature\n");
@@ -267,6 +268,8 @@ int main ( int argc, char * argv[] ) {
   double rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
   double PE, KE, TE, ecor, ecut, T0=1.0, TE0;
   double rr3,dt=0.001, dt2;
+  int Tjump_at=-1;
+  double Tjump_to=0.0;
   int i,j,s;
   int nSteps = 10, fSamp=100;
   int use_e_corr=0;
@@ -278,7 +281,8 @@ int main ( int argc, char * argv[] ) {
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
   double dpdT=2.0,dpd_gam=1.0,dpd_sigma,sqrt_dt;
-
+  int replica_index=0;
+  
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
   for (i=1;i<argc;i++) {
@@ -288,6 +292,7 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-rc")) rc2=atof(argv[++i]);
     else if (!strcmp(argv[i],"-dpdT")) dpdT=atof(argv[++i]);
     else if (!strcmp(argv[i],"-dpd_gam")) dpd_gam=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-Tjump")) sscanf(argv[++i],"%i,%lf",&Tjump_at,&Tjump_to);
     else if (!strcmp(argv[i],"-ns")) nSteps = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-T0")) T0=atof(argv[++i]);
     else if (!strcmp(argv[i],"-fs")) fSamp=atoi(argv[++i]);
@@ -297,6 +302,7 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-seed")) Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-uf")) unfold = 1;
     else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-rep")) replica_index = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-h")) {
       usage(); exit(0);
     }
@@ -371,6 +377,10 @@ int main ( int argc, char * argv[] ) {
   fprintf(stdout,"#LABELS step time PE KE TE drift T P\n");
 
   for (s=0;s<nSteps;s++) {
+    if (s==Tjump_at) {
+      dpdT=Tjump_to;
+      dpd_sigma=sqrt(2*dpd_gam*dpdT);
+    }
     /* First integration half-step */
     for (i=0;i<N;i++) {
       rx[i]+=vx[i]*dt+0.5*dt2*fx[i];

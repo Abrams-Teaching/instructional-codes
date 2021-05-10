@@ -1,0 +1,26 @@
+#!/usr/bin/gnuplot
+
+set out "ct_h=2.eps"
+
+set term post eps enh color "Times-Roman" 36 linewidth 3 solid
+
+set size square 1.5
+
+set xr [0:4]
+
+f(x)= a*x+b
+
+b=0.1
+a=0.1
+
+fit [x=1.5:5] f(x) "ct.dat" via a,b
+set nokey
+print a
+set xlabel "t ({/Symbol t})"
+set ylabel "C(t)" 1.0
+#set format y ""
+set ytics 0,0.01,0.04
+set yr [0:0.035]
+set xtics 0,1,4
+set label 1 "Slope = 0.0075" at 2,0.015
+p "ct.dat" w l 1, f(x) w l 3

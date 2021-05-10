@@ -1,0 +1,119 @@
+
+
+ Path Ensemble Sampling; Written By Thijs J.H. Vlugt
+
+ Initial Seed                           :  2766
+ Random Number                          :   0.0748048329
+
+
+
+
+ Total Number Of Atoms                  :  15
+ Number Of Interactions                 :  104
+ Radius                                 :   3.
+ Density                                :   0.530516477
+ W                                      :   0.25
+ H                                      :   2.
+ Total Energy                           :   9.
+ Total Number Of Cycles                 :  10000
+ Steps In A Cycle                       :  5
+ Time Step                              :   0.001
+ Left  (Region A)                       :   1.3
+ Right (Region B)                       :   1.45
+ Lmin                                   :   1.43
+ Lmax                                   :   2.45
+
+
+ Prob. Shifting                         :   0.95
+ Number Of Slices                       :  1000
+ Number Of Mc Cycles                    :  10000
+ Number Of Init. Cycles                 :  500
+ Maximum Rotation                       :   0.7
+
+
+
+
+ Succeeded In Finding A Path
+
+
+
+ Cycle                                  :  1
+ Energy                                 :   9.00001225
+ Average Energy Drift                   :   7.3046051E-06
+ Fraction Acc. Shifting                 :   1.
+
+
+ Cycle                                  :  1000
+ Energy                                 :   9.00022215
+ Average Energy Drift                   :   7.45386653E-06
+ Fraction Acc. Shifting                 :   0.901349948
+ Fraction Acc. Shooting                 :   0.621621622
+
+
+ Cycle                                  :  2000
+ Energy                                 :   9.00008591
+ Average Energy Drift                   :   8.04326251E-06
+ Fraction Acc. Shifting                 :   0.831243469
+ Fraction Acc. Shooting                 :   0.639534884
+
+
+ Cycle                                  :  3000
+ Energy                                 :   9.00019531
+ Average Energy Drift                   :   7.73359753E-06
+ Fraction Acc. Shifting                 :   0.862056984
+ Fraction Acc. Shooting                 :   0.647540984
+
+
+ Cycle                                  :  4000
+ Energy                                 :   9.0003079
+ Average Energy Drift                   :   7.68232396E-06
+ Fraction Acc. Shifting                 :   0.855766727
+ Fraction Acc. Shooting                 :   0.641509434
+
+
+ Cycle                                  :  5000
+ Energy                                 :   9.0003938
+ Average Energy Drift                   :   7.83070711E-06
+ Fraction Acc. Shifting                 :   0.84360683
+ Fraction Acc. Shooting                 :   0.631313131
+
+
+ Cycle                                  :  6000
+ Energy                                 :   9.00017255
+ Average Energy Drift                   :   7.963236E-06
+ Fraction Acc. Shifting                 :   0.818514007
+ Fraction Acc. Shooting                 :   0.604743083
+
+
+ Cycle                                  :  7000
+ Energy                                 :   9.00041614
+ Average Energy Drift                   :   8.0323353E-06
+ Fraction Acc. Shifting                 :   0.783089334
+ Fraction Acc. Shooting                 :   0.588235294
+
+
+ Cycle                                  :  8000
+ Energy                                 :   9.0002365
+ Average Energy Drift                   :   7.84698146E-06
+ Fraction Acc. Shifting                 :   0.806007345
+ Fraction Acc. Shooting                 :   0.595744681
+
+
+ Cycle                                  :  9000
+ Energy                                 :   8.99999998
+ Average Energy Drift                   :   7.87025218E-06
+ Fraction Acc. Shifting                 :   0.800279981
+ Fraction Acc. Shooting                 :   0.577102804
+
+
+ Cycle                                  :  10000
+ Energy                                 :   8.99992379
+ Average Energy Drift                   :   7.95508872E-06
+ Fraction Acc. Shifting                 :   0.782192789
+ Fraction Acc. Shooting                 :   0.574948665
+
+
+
+
+ The Program Ended Normally
+

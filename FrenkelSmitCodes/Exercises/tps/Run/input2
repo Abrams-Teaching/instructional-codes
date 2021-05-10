@@ -1,0 +1,4 @@
+Ldisk      Pshift     Deltaphi
+.False.    0.95d0     0.6d0 
+Ncycle     Nminit     Lumbrella
+1000000     500    .False.

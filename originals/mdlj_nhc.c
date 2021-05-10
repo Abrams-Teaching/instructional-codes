@@ -225,7 +225,7 @@ void init ( double * rx, double * ry, double * rz,
   memset(iz,0,n*sizeof(int));
 }
 
-/* Chain half integration step (Algorithm 30) */
+/* Chain half integration step (Algorithm 31 on p 541 of F&S) */
 void chain ( double * KE, double dt, double dt_2,
 	     double dt_4, double dt_8,
 	     double * Q, double * xi, double * vxi,
@@ -279,6 +279,8 @@ int main ( int argc, char * argv[] ) {
   int prog = 1;
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
+  int Tjump_at=-1;
+  double Tjump_to=0.0;
 
   /* Here we parse the command line arguments;  If
    you add an option, document it in the usage() function! */
@@ -296,6 +298,8 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-seed")) Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-uf")) unfold = 1;
     else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-Tjump")) sscanf(argv[++i],"%i,%lf",
+          &Tjump_at,&Tjump_to);
     else if (!strcmp(argv[i],"-nhcT")) nhcT = atof(argv[++i]);
     else if (!strcmp(argv[i],"-nhcQ")) sscanf(argv[++i],"%lf,%lf",
           &Qdum1,&Qdum2);
@@ -385,6 +389,7 @@ int main ( int argc, char * argv[] ) {
   fprintf(stdout,"#LABELS step time PE KE TE drift T P\n");
 
   for (s=0;s<nSteps;s++) {
+    if (s==Tjump_at) nhcT=Tjump_to;
     chain(&KE,dt,dt_2,dt_4,dt_8,Q,xi,vxi,vx,vy,vz,nl,N,nhcT);
     /* First integration half-step */
     for (i=0;i<N;i++) {

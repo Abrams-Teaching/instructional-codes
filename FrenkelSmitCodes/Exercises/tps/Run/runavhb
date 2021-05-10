@@ -1,0 +1,35 @@
+#! /bin/csh -f
+#
+# Calculation Of <h_B(t)>_{F(x_0,T)}
+#
+# Upath     = Total Energy
+# H         = Height Of The Energy Barrier
+# Tstep     = Timestep Integration
+# Lmin/Lmax = Boundaries For Umbrella Sampling
+# Ldisk     = Read Configuration From Disk
+# Pshift    = Probability To Select A Shifting Move
+# Deltaphi  = Maximum Rotation Angle (Rad)
+# Lumbrella = Do We Calculate P(\lambda,t) ?
+
+set nstep  = 500000
+set nminit = 500
+
+cat > input1 <<endofdata
+Nstep      Lscreen
+$nstep     .False.
+Lensemble  Tstep 
+.True.     0.001d0
+Upath      H          Lmin    Lmax
+9.0d0      5.0d0      1.3d0   1.4d0
+endofdata
+
+cat > input2 <<endofdata
+Ldisk      Pshift     Deltaphi
+.False.    0.95d0     0.6d0 
+Ncycle     Nminit     Lumbrella
+$nstep     $nminit    .False.
+endofdata
+
+../Source/tps > outt
+
+exit
