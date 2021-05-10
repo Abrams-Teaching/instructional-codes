@@ -3,3 +3,4 @@
 gsl_test
 tests/
 my_work/
+*.o
