@@ -18,7 +18,7 @@
 Ccccccccccccccccccccccccccccccccccccccccccccc
 C     Fourier Part Of The Ewald Summation   C
 Ccccccccccccccccccccccccccccccccccccccccccccc
-
+C Alpha here is square-root of alpha in the text
       Ialpha = -0.25d0/(Alpha*Alpha)
       Ukappa = 0.0d0
       Uself  = 0.0d0

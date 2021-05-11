@@ -24,6 +24,9 @@ Cccccccccccccccccccccccccccccccccccc
                   Stop
                Endif
 
+C               Rx(I) = Dble(Ix-1) + 0.5d0
+C               Ry(I) = Dble(Iy-1) + 0.5d0
+C               Rz(I) = Dble(Iz-1) + 0.5d0
                Rx(I) = Dble(Ix-1) + 0.5d0 + 0.6*(RAND()-0.5)
                Ry(I) = Dble(Iy-1) + 0.5d0 + 0.6*(RAND()-0.5)
                Rz(I) = Dble(Iz-1) + 0.5d0 + 0.6*(RAND()-0.5)

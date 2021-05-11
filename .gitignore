@@ -4,3 +4,10 @@ gsl_test
 tests/
 my_work/
 *.o
+FrenkelSmitCodes/Exercises/ewald/Run/ewald
+FrenkelSmitCodes/Exercises/ewald/Run/ewald-l
+FrenkelSmitCodes/Exercises/ewald/Run/fort.21
+FrenkelSmitCodes/Exercises/ewald/Run/fort.22
+FrenkelSmitCodes/Exercises/ewald/Run/out
+FrenkelSmitCodes/Exercises/ewald/Run/run.py
+FrenkelSmitCodes/Exercises/ewald/Source/ewald
