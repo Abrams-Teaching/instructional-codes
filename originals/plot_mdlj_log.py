@@ -89,7 +89,7 @@ for log,label in zip(args.logs,plot_labels):
 #        print('{:.3f}'.format(relfluc))
         if args.divide_by_N:
             y/=args.N
-        raw_alpha=0
+        raw_alpha=1
         if args.every>1:
             lowessfrac=args.every/len(y)
             smres=lowess(y,x,frac=lowessfrac)
