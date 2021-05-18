@@ -60,31 +60,32 @@ if args.show_column_labels:
     exit()
 alldat={}
 pdat={}
-plot_labels=[]
+plot_labels={}
 for log in args.logs:
-    print(log)
     alldat[log]=np.loadtxt(log)
     cols=list(map(int,args.d.split(',')))
     x=alldat[log][:,1]
     y=[]
-
+    this_labels=[]
     for c in cols:
         y.append(alldat[log][:,c].copy())
         if len(col_labels)>0:
-            plot_labels.append(col_labels[c])
+            this_labels.append(col_labels[c])
         else:
-            plot_labels.append('')
+            this_labels.append('')
     pdat[log]=[x,y]
+    plot_labels[log]=this_labels
 
 fig,ax=plt.subplots(1,1,figsize=(6,4))
 if args.xlog:
     ax.set_xscale('log')
-if len(args.labels)>0:
-    plot_labels=args.labels
-for log,label in zip(args.logs,plot_labels):
+if len(args.labels)==len(args.logs):
+    for l,label in zip(args.logs,args.labels):
+        plot_labels[l]=[label]
+for log in args.logs:
     x,yy=pdat[log]
-
-    for y in yy:
+    ll=plot_labels[log]
+    for y,label in zip(yy,ll):
         relfluc=y[len(y)//2:].var()/(y[len(y)//2:].mean()**2)*args.N
 #        print('{:.3f}'.format(relfluc))
         if args.divide_by_N:
