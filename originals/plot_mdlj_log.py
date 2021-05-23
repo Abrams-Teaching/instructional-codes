@@ -7,6 +7,50 @@ import argparse as ap
 import statsmodels.api as sm
 lowess = sm.nonparametric.lowess
 
+def get_data ( logs, cols, col_labels ):
+    alldat={}
+    pdat={}
+    plot_labels={}
+    for log in args.logs:
+        alldat[log]=np.loadtxt(log)
+        x=alldat[log][:,1]
+        y=[]
+        this_labels=[]
+        for c in cols:
+            y.append(alldat[log][:,c].copy())
+            if len(col_labels)>0:
+                this_labels.append(col_labels[c])
+            else:
+                this_labels.append('')
+        pdat[log]=[x,y]
+        plot_labels[log]=this_labels
+    return pdat,plot_labels
+
+def get_NAMD_data ( logs, cols, col_labels ):
+    alldat={}
+    pdat={}
+    plot_labels={}
+    for log in args.logs:
+        linedat=[]
+        with open(log) as f:
+            for l in f:
+                tok=l.strip().split()
+                if tok[0]=='ENERGY:':
+                    linedat.append([int(tok[1])] + [float(_) for _ in tok[2:]])
+        alldat[log]=np.array(linedat).T.tolist()
+        x=alldat[log][:,1]
+        y=[]
+        this_labels=[]
+        for c in cols:
+            y.append(alldat[log][:,c].copy())
+            if len(col_labels)>0:
+                this_labels.append(col_labels[c])
+            else:
+                this_labels.append('')
+        pdat[log]=[x,y]
+        plot_labels[log]=this_labels
+    return pdat,plot_labels
+
 def block ( A ):
     Ab=[]
     for i in range(len(A)//2):
@@ -33,6 +77,7 @@ def flyberg ( y, minblocks=4):
 
 parser=ap.ArgumentParser()
 parser.add_argument("-logs",default=[],action='append',type=str,help="log file")
+parser.add_argument("-fmt",default='',type=str,help="format * or NAMD")
 parser.add_argument("-labels",default=[],action='append',type=str,help="labels")
 parser.add_argument("-d",default='2',type=str,help="comma-separated-list of data columns to plot vs time")
 parser.add_argument("-ylabel",default='energy ($\epsilon$)',type=str,help="y-axis label")
@@ -46,35 +91,26 @@ parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what 
 parser.add_argument("-every",default=1,type=int,help="only plot every # points")
 args=parser.parse_args()
 
+cols=list(map(int,args.d.split(',')))
+
 if len(args.logs)==0:
     args.logs.append("log")
 col_labels=[]
 with open(args.logs[0]) as f:
     for l in f:
         tok=l.split()
-        if tok[0]=="#LABELS":
+        if tok[0]=="#LABELS" or tok[0]=='ETITLE:':
             col_labels=tok[1:]
+            break
 if args.show_column_labels:
     for i,c in enumerate(col_labels):
         print(i,c)
     exit()
-alldat={}
-pdat={}
-plot_labels={}
-for log in args.logs:
-    alldat[log]=np.loadtxt(log)
-    cols=list(map(int,args.d.split(',')))
-    x=alldat[log][:,1]
-    y=[]
-    this_labels=[]
-    for c in cols:
-        y.append(alldat[log][:,c].copy())
-        if len(col_labels)>0:
-            this_labels.append(col_labels[c])
-        else:
-            this_labels.append('')
-    pdat[log]=[x,y]
-    plot_labels[log]=this_labels
+
+if args.fmt=='NAMD':
+    pdat_plot_labels = get_NAMD_data(args.logs,cols,col_labels)
+else:
+    pdat,plot_labels = get_data(args.logs,cols,col_labels)
 
 fig,ax=plt.subplots(1,1,figsize=(6,4))
 if args.xlog:
