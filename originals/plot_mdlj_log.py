@@ -89,8 +89,10 @@ parser.add_argument("-do-flyvberg",default=False,action='store_true',help="Do Fl
 parser.add_argument("-divide-by-N",default=False,action='store_true',help="what do you think?")
 parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what do you think?")
 parser.add_argument("-every",default=1,type=int,help="only plot every # points")
+parser.add_argument("-ylim",default='',type=str,help="comma-separated ylim")
 args=parser.parse_args()
-
+if len(args.ylim)>0:
+    args.ylim=[float(_) for _ in args.ylim.split(',')]
 cols=list(map(int,args.d.split(',')))
 
 if len(args.logs)==0:
@@ -148,6 +150,8 @@ for log in args.logs:
 if len(col_labels)>0:
     ax.set_xlabel(col_labels[1 if args.fmt!='NAMD' else 0])
 ax.set_ylabel(args.ylabel)
+if len(args.ylim)>0:
+    ax.set_ylim(args.ylim)
 ax.legend()
 plt.savefig(args.o,bbox_inches='tight')
 
