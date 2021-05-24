@@ -135,12 +135,12 @@ for log in args.logs:
             smres=lowess(y,x,frac=lowessfrac)
             plot_x=smres[:,0]
             plot_y=smres[:,1]
-            raw_alpha=0.5
+            raw_alpha=0.25
         if args.fluc_in_leg:
             label+=', {:.3f}'.format(relfluc)
         if args.every>1:
-            ax.plot(plot_x,plot_y,alpha=1,label=r'{:s}'.format(label))
             ax.plot(x,y,alpha=raw_alpha)
+            ax.plot(plot_x,plot_y,alpha=1,label=r'{:s}'.format(label))
         else:
             ax.plot(x,y,alpha=raw_alpha,label=r'{:s}'.format(label))
         if args.do_flyvberg:
