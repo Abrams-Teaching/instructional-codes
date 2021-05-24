@@ -171,9 +171,11 @@ int main ( int argc, char * argv[] ) {
   int N=216,c,a,p;
   int Nres=216,N0,Ntot;
   double L=0.0, E, arg, dumvir, beta;
-  double rho=0.8, T=2.0, rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
+  double rho=-1.0, T=2.0, rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
   double rho_sum, p_sum, this_e;
-  double mu = 0.0;
+//  double mu = 0.0;
+  double Pid = 1.0; 
+  double mu_ex_tally=0.0;
   double E_new, E_old, esum, rr3, ecor, ecut;
   double dr=0.2;
   double disp_wt=0.5, x;
@@ -197,7 +199,7 @@ int main ( int argc, char * argv[] ) {
     if (!strcmp(argv[i],"-N")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-Nres")) N=atoi(argv[++i]);
     else if (!strcmp(argv[i],"-rho")) rho=atof(argv[++i]);
-    else if (!strcmp(argv[i],"-mu")) mu=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-Pid")) Pid=atof(argv[++i]);
     else if (!strcmp(argv[i],"-disp-wt")) disp_wt=atof(argv[++i]);
     else if (!strcmp(argv[i],"-T")) T=atof(argv[++i]);
     else if (!strcmp(argv[i],"-dr")) dr=atof(argv[++i]);
@@ -227,6 +229,13 @@ int main ( int argc, char * argv[] ) {
     }
   }
 
+  beta = 1.0/T;
+  if (rho==-1.0) {
+    rho = beta*Pid;
+    if (rho>0.6) {
+      rho = 0.6;
+    }
+  }
   /* Compute the side-length */
   L = pow((V=N/rho),0.3333333);
 
@@ -238,17 +247,11 @@ int main ( int argc, char * argv[] ) {
 
   /* Compute the *squared* cutoff, reusing the variable rc2 */
   rc2*=rc2;
-
-  /* For computational efficiency, use reciprocal T */
-  beta = 1.0/T;
-
-  /* compute box volume */
-  V = L*L*L;
   
   /* Output some initial information */
   fprintf(stdout,"# muVT MC Simulation of a Lennard-Jones fluid\n");
-  fprintf(stdout,"# L = %.5lf; rho0 = %.5lf; mu' = %.5lf; N0 = %i; rc = %.5lf\n",
-	  L,rho,mu,N,sqrt(rc2));
+  fprintf(stdout,"# L = %.5lf; rho0 = %.5lf; P(id) = %.5lf; N0 = %i; rc = %.5lf\n",
+	  L,rho,Pid,N,sqrt(rc2));
   fprintf(stdout,"# nCycles %i, nEq %i, seed %lu, dR %.5lf\n",
 	  nCycles,nEq,Seed,dr);
   
@@ -287,8 +290,9 @@ int main ( int argc, char * argv[] ) {
   vir = vir_old;
   p_sum = vir/3.0/V+pcor;
   rho_sum = N/V;
+  mu_ex_tally = 0.0;
   if (prog>0) {
-    printf("#LABEL cycle <e>/<n> p mu_ex\n");
+    printf("#LABEL cycle <e>/<n> p rho mu_ex\n");
   }
   for (c=0;c<nCycles;c++) {
     /* Get a random number between 0 and 1 */
@@ -307,7 +311,9 @@ int main ( int argc, char * argv[] ) {
         nDelAtt++;
         i=(int)gsl_rng_uniform_int(r,N);
         this_e = e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&dumvir,0);
-        arg = N/V*exp(-beta*(-this_e+mu));
+        //arg = N/V*exp(-beta*(-this_e+mu));
+        arg=N/(beta*Pid*V)*exp(-beta*(-this_e));
+        //mu_ex_tally+=exp(-beta*this_e);
         //printf("del e %.5le arg %.5le\n",this_e,arg);fflush(stdout);
         if (gsl_rng_uniform(r)<arg) {
             rx[i]=rx[N-1];
@@ -325,7 +331,9 @@ int main ( int argc, char * argv[] ) {
         ry[N]=gsl_rng_uniform(r)*L;
         rz[N]=gsl_rng_uniform(r)*L;
         this_e = e_i(N,rx,ry,rz,N+1,L,rc2,tailcorr,ecor,shift,ecut,&dumvir,0);
-        arg = V/(N+1)*exp(-beta*(this_e-mu));
+//        arg = V/(N+1)*exp(-beta*(this_e-mu));
+        arg=beta*Pid*V/(N+1)*exp(-beta*this_e);
+        mu_ex_tally+=exp(-beta*this_e);
         if (gsl_rng_uniform(r)<arg) {
             N++;
             E+=this_e;
@@ -344,7 +352,8 @@ int main ( int argc, char * argv[] ) {
       rho_sum+=N/V;
       nSamp++;
       if (prog>0&&!(c%prog)) {
-        printf("% 10i % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho_sum/nSamp*T,mu-T*log(rho_sum/nSamp));
+        printf("% 10i % .5f % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho_sum/nSamp*T,rho_sum/nSamp,
+        -T*log(mu_ex_tally/nInsAtt));
         fflush(stdout);
       }
     }
@@ -361,8 +370,8 @@ int main ( int argc, char * argv[] ) {
 
   if (short_out)
     fprintf(stdout,"%.3lf %.3lf | %.6lf %.6lf : %.5lf | %.5lf %.5lf %.5lf %.5lf\n",
-	    T,mu,dr,disp_wt,((double)nAcc)/nCycles,
-	    esum/nSamp/N,p_sum/nSamp+rho_sum/nSamp*T,rho_sum/nSamp,mu-T*log(rho_sum/nSamp));
+	    T,Pid,dr,disp_wt,((double)nAcc)/nCycles,
+	    esum/nSamp/N,p_sum/nSamp+rho_sum/nSamp*T,rho_sum/nSamp,-T*log(mu_ex_tally/nInsAtt) + (tailcorr?(2*ecor):0));
   else
     fprintf(stdout,"NPT Metropolis Monte Carlo Simulation"
 	    " of the Lennard-Jones fluid in the Grand Canonical"
@@ -372,7 +381,7 @@ int main ( int argc, char * argv[] ) {
 	    "Maximum particle displacement:    % .5lf\n"
 	    "Displacement weight:              % .5lf\n"
 	    "Temperature:                      % .5lf\n"
-	    "Relative chemical potential:      % .5lf\n"
+	    "Bath ideal-gas pressure:          % .5lf\n"
       "Initial number of particles:      %i\n"
 	    "Tail corrections used?            %s\n"
 	    "Shifted potentials used?          %s\n"
@@ -390,7 +399,7 @@ int main ( int argc, char * argv[] ) {
 	    "Computed pressure:                % .5lf\n"
       "Excess chemical potential:        % .5lf\n"
 	    "Program ends.\n",
-	    nCycles,dr,disp_wt,T,mu,N0,
+	    nCycles,dr,disp_wt,T,Pid,N0,
 	    tailcorr?"Yes":"No",shift?"Yes":"No",N,
 	    nTransAtt,nInsAtt,nDelAtt,
 	    ((double)nTransAcc)/(nTransAtt?nTransAtt:1),
@@ -399,7 +408,7 @@ int main ( int argc, char * argv[] ) {
 	    ((double)nAcc)/nCycles,
 	    esum/nSamp/N,rho_sum/nSamp,
 	    p_sum/nSamp+rho_sum/nSamp*T,
-      mu-T*log(rho_sum/nSamp));
+      -T*log(mu_ex_tally/nInsAtt) + (tailcorr?(2*ecor):0));
   if (traj_fn) {
     fprintf(stdout,"Trajectory written to %s.\n",traj_fn);
   }

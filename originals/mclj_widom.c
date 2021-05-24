@@ -138,7 +138,8 @@ int main ( int argc, char * argv[] ) {
   int N=216,c,a,p;
   double L=0.0;
   double we, w_sum;
-  double rho=0.5, T=1.0, rc2 = 3.5, vir, vir_old, vir_sum, pcor, V;
+  double beta;
+  double rho=0.5, T=1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
   double E_new, E_old, esum, rr3, ecor, ecut;
   double dr=0.2,dx,dy,dz;
   double rxold,ryold,rzold;
@@ -148,6 +149,7 @@ int main ( int argc, char * argv[] ) {
   int short_out=0;
   int shift=0;
   int tailcorr=1;
+  int prog=0;
 
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
@@ -169,6 +171,7 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"-so")) short_out=1;
     else if (!strcmp(argv[i],"+tc")) tailcorr=0;
     else if (!strcmp(argv[i],"-sh")) shift=1;
+    else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-s")) 
       Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-traj_samp")) traj_samp = atoi(argv[++i]);
@@ -201,7 +204,7 @@ int main ( int argc, char * argv[] ) {
   rc2*=rc2;
 
   /* For computational efficiency, use reciprocal T */
-  T = 1.0/T;
+  beta = 1.0/T;
 
   /* compute box volume */
   V = L*L*L;
@@ -238,61 +241,67 @@ int main ( int argc, char * argv[] ) {
   nAcc = 0;
   esum = 0.0;
   nSamp = 0;
-  vir_sum = 0.0;
+  p_sum = 0.0;
   w_sum=0.0;
+  if (prog>0) {
+    printf("#LABEL cycle <e>/<n> p mu_ex\n");
+  }
   for (c=0;c<nCycles;c++) {
-    for (p=0;p<N;p++) {
-      /* Randomly select a particle */
-      i=(int)gsl_rng_uniform_int(r,N);
-      /* calculate displacement */
-      dx = dr*(0.5-gsl_rng_uniform(r));
-      dy = dr*(0.5-gsl_rng_uniform(r));
-      dz = dr*(0.5-gsl_rng_uniform(r));
-      //printf("%d %.6lf %.6lf %.6lf\n",i,dx,dy,dz);
-      /* Save the current position of particle i */
-      rxold=rx[i];
-      ryold=ry[i];
-      rzold=rz[i];
+    /* Randomly select a particle */
+    i=(int)gsl_rng_uniform_int(r,N);
+    /* calculate displacement */
+    dx = dr*(0.5-gsl_rng_uniform(r));
+    dy = dr*(0.5-gsl_rng_uniform(r));
+    dz = dr*(0.5-gsl_rng_uniform(r));
+    //printf("%d %.6lf %.6lf %.6lf\n",i,dx,dy,dz);
+    /* Save the current position of particle i */
+    rxold=rx[i];
+    ryold=ry[i];
+    rzold=rz[i];
 
-      /* Displace particle i */
-      rx[i]+=dx;
-      ry[i]+=dy;
-      rz[i]+=dz;
+    /* Displace particle i */
+    rx[i]+=dx;
+    ry[i]+=dy;
+    rz[i]+=dz;
 
-      /* Apply periodic boundary conditions */
-      if (rx[i]<0.0) rx[i]+=L;
-      if (rx[i]>L)   rx[i]-=L;
-      if (ry[i]<0.0) ry[i]+=L;
-      if (ry[i]>L)   ry[i]-=L;
-      if (rz[i]<0.0) rz[i]+=L;
-      if (rz[i]>L)   rz[i]-=L;
+    /* Apply periodic boundary conditions */
+    if (rx[i]<0.0) rx[i]+=L;
+    if (rx[i]>L)   rx[i]-=L;
+    if (ry[i]<0.0) ry[i]+=L;
+    if (ry[i]>L)   ry[i]-=L;
+    if (rz[i]<0.0) rz[i]+=L;
+    if (rz[i]>L)   rz[i]-=L;
 
-      /* Get the new energy */
-      E_new = total_e(rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&vir);
-      
-      //exit(-1);
-      /* Conditionally accept... */
-      if (gsl_rng_uniform(r) < exp(-T*(E_new-E_old))) {
-        E_old=E_new;
-        vir_old=vir;
-        nAcc++;
-        //printf("%d %.5lf %.5lf %d\n",c,E_new,E_old,nAcc);
-      }
-      /* ... or reject the move; reassign the old positions */
-      else {
-        rx[i]=rxold;
-        ry[i]=ryold;
-        rz[i]=rzold;
-      }
-      /* Sample: default frequency is once per trial move; We must
-        include results of a move regardless of whether the move is
-        accepted or rejected. */
-      if (c>nEq) {
-        esum+=E_old;
-        vir_sum+=vir_old;
-        widom(rx,ry,rz,N,L,rc2,shift,ecut,r,&we);
-        w_sum+=exp(-T*we);
-        nSamp++;
+    /* Get the new energy */
+    E_new = total_e(rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&vir);
+    
+    //exit(-1);
+    /* Conditionally accept... */
+    if (gsl_rng_uniform(r) < exp(-beta*(E_new-E_old))) {
+      E_old=E_new;
+      vir_old=vir;
+      nAcc++;
+      //printf("%d %.5lf %.5lf %d\n",c,E_new,E_old,nAcc);
+    }
+    /* ... or reject the move; reassign the old positions */
+    else {
+      rx[i]=rxold;
+      ry[i]=ryold;
+      rz[i]=rzold;
+    }
+    /* Sample: default frequency is once per trial move; We must
+      include results of a move regardless of whether the move is
+      accepted or rejected. */
+    if (c>nEq) {
+      esum+=E_old;
+      p_sum+=vir_old/3.0/V+pcor;
+      widom(rx,ry,rz,N,L,rc2,shift,ecut,r,&we);
+      w_sum+=exp(-beta*we);
+      nSamp++;
+      if (prog>0&&!(c%prog)) {
+        printf("% 10i % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho/beta,
+              -T*log(w_sum/nSamp) + (tailcorr?(2*ecor):0));
+        fflush(stdout);
       }
     }
     if (traj_fn&&!(c%traj_samp)) {
@@ -310,7 +319,7 @@ int main ( int argc, char * argv[] ) {
   if (short_out)
     fprintf(stdout,"%.6lf %.5lf %.5lf %.5lf %.5lf %.5lf\n",
 	    dr,((double)nAcc)/(N*nCycles),
-	    esum/nSamp/N,vir_sum/3.0/nSamp/V+rho*T+pcor,
+	    esum/nSamp/N,p_sum/nSamp+rho*T,
       rho,-log(w_sum/nSamp)/T + (tailcorr?(2*ecor):0));
   else
     fprintf(stdout,"NVT Metropolis Monte Carlo Simulation"
@@ -340,9 +349,9 @@ int main ( int argc, char * argv[] ) {
 	    ecor,pcor,ecut,
 	    ((double)nAcc)/(N*nCycles),
 	    esum/nSamp/N,
-	    rho/T,vir_sum/3.0/nSamp/V,
-	    vir_sum/3.0/nSamp/V+rho/T+(tailcorr?pcor:0.0),
-	    -log(w_sum/nSamp)/T + (tailcorr?(2*ecor):0));
+	    rho/T,p_sum/nSamp,
+	    p_sum/nSamp+rho/T,
+	    -log(w_sum/nSamp)*T + (tailcorr?(2*ecor):0));
   if (traj_fn) {
     fprintf(stdout,"Trajectory written to %s.\n",traj_fn);
   }
