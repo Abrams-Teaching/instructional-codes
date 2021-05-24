@@ -103,10 +103,11 @@ with open(args.logs[0]) as f:
         if len(tok)>0 and (tok[0]=="#LABELS" or tok[0]=='ETITLE:'):
             col_labels=tok[1:]
             break
+        
 if args.show_column_labels:
     for i,c in enumerate(col_labels):
         print(i,c)
-    exit()
+    #exit()
 
 if args.fmt=='NAMD':
     pdat,plot_labels = get_NAMD_data(args.logs,cols,col_labels)
