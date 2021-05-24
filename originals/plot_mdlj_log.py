@@ -99,6 +99,7 @@ col_labels=[]
 with open(args.logs[0]) as f:
     for l in f:
         tok=l.split()
+        print(len(tok),tok)
         if tok[0]=="#LABELS" or tok[0]=='ETITLE:':
             col_labels=tok[1:]
             break
