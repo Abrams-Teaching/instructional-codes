@@ -89,7 +89,7 @@ parser.add_argument("-do-flyvberg",default=False,action='store_true',help="Do Fl
 parser.add_argument("-divide-by-N",default=False,action='store_true',help="what do you think?")
 parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what do you think?")
 parser.add_argument("-every",default=1,type=int,help="only plot every # points")
-parser.add_argument("-ylim",default='',type=str,help="comma-separated ylim")
+parser.add_argument("-ylim",default=[],nargs='+',type=float,help="space-separated ylim")
 args=parser.parse_args()
 if len(args.ylim)>0:
     args.ylim=[float(_) for _ in args.ylim.split(',')]
