@@ -91,8 +91,7 @@ parser.add_argument("-fluc-in-leg",default=False,action='store_true',help="what 
 parser.add_argument("-every",default=1,type=int,help="only plot every # points")
 parser.add_argument("-ylim",default=[],nargs='+',type=float,help="space-separated ylim")
 args=parser.parse_args()
-if len(args.ylim)>0:
-    args.ylim=[float(_) for _ in args.ylim.split(',')]
+
 cols=list(map(int,args.d.split(',')))
 
 if len(args.logs)==0:
