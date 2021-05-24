@@ -35,7 +35,7 @@ def get_NAMD_data ( logs, cols, col_labels ):
         with open(log) as f:
             for l in f:
                 tok=l.strip().split()
-                if tok[0]=='ENERGY:':
+                if len(tok)>0 and tok[0]=='ENERGY:':
                     linedat.append([int(tok[1])] + [float(_) for _ in tok[2:]])
         alldat[log]=np.array(linedat).T.tolist()
         x=alldat[log][:,1]
