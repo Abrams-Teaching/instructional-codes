@@ -146,7 +146,7 @@ for log in args.logs:
             n,m,s=flyberg(y)
 
 if len(col_labels)>0:
-    ax.set_xlabel(col_labels[1])
+    ax.set_xlabel(col_labels[1 if args.fmt!='NAMD' else 0])
 ax.set_ylabel(args.ylabel)
 ax.legend()
 plt.savefig(args.o,bbox_inches='tight')
