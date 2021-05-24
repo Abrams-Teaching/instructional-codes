@@ -110,7 +110,7 @@ if args.show_column_labels:
     exit()
 
 if args.fmt=='NAMD':
-    pdat_plot_labels = get_NAMD_data(args.logs,cols,col_labels)
+    pdat,plot_labels = get_NAMD_data(args.logs,cols,col_labels)
 else:
     pdat,plot_labels = get_data(args.logs,cols,col_labels)
 
