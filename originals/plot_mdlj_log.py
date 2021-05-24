@@ -38,6 +38,7 @@ def get_NAMD_data ( logs, cols, col_labels ):
                 if len(tok)>0 and tok[0]=='ENERGY:':
                     linedat.append([int(tok[1])] + [float(_) for _ in tok[2:]])
         alldat[log]=np.array(linedat).T.tolist()
+        print(alldat[log])
         x=alldat[log][:,1]
         y=[]
         this_labels=[]
