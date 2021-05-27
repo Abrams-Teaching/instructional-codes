@@ -27,8 +27,9 @@ if nPe>nPe_detected:
     print('Warning: requested {:d} processors but only {:d} are found.'.format(nPe,nPe_detected))
     nPe=nPe_detected
 
-# Specify spring constant and windows 
-wxs = np.linspace(args.zlim[0],args.zlim[1],args.n+1)
+# windows 
+win_edges = np.linspace(args.zlim[0],args.zlim[1],args.n+1)
+wz=win_edges[:-1]+0.5*(args.zlim[1]-args.zlim[0])/args.n
 
 # Default values for program name and command-line arguments
 prg='bd-w'
@@ -36,8 +37,8 @@ options={'ns':50000000,'k-win':args.k,'hist-n':1000,'T':args.T}
 
 # build list of fully-resolved command names
 commands=[]
-for i,wx in enumerate(wxs):
-    options['x-win']=wx
+for i,w in enumerate(wz):
+    options['x-win']=w
     options['which-win']=i
     options['plot-w']='win-pot{:d}.dat'.format(i)
     if i==0:
