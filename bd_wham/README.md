@@ -62,3 +62,13 @@ optional arguments:
   -o <str>             output plot image file
   -of <str>            output data file containing F vs z
 ```
+
+A single example workflow:
+```
+$ python ../do_set.py -np 16 -n 16 -T 0.5 -k 15.0 -zlim -8 8
+$ python ../multiplot.py -n 16 -of tp1.dat  -o tp1.png -T 0.5 -k 15.0 -zlim -8 8
+```
+
+The output image:
+
+![plot](tp1.png)
