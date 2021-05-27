@@ -75,7 +75,6 @@ double total_e ( double * rx, double * ry, double * rz, int N, double L,
   return e;
 }
 
-
 /* Writes configuration in XYZ format */
 void write_xyz(FILE * fp, double * rx, double * ry, double * rz, int n, double L) {
   int i;
@@ -303,7 +302,7 @@ int main ( int argc, char * argv[] ) {
     //printf("%d %.6lf %.6lf %.6lf\n",i,dx,dy,dz);
     ei_old=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&ivir_old,0);
     if (which_sim==1&&c>nEq) {
-      gsl_histogram_increment(h,ei_old); // energy change if ptcl were deleted
+      if (gsl_histogram_increment(h,ei_old)==GSL_EDOM) noutside++; // energy change if ptcl were deleted
     }
     /* Save the current position of particle i */
     rxold=rx[i];
