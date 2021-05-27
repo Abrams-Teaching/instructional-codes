@@ -6,10 +6,10 @@ import matplotlib.cm as cm
 parser=ap.ArgumentParser()
 parser.add_argument('-n',type=int,default=16,help='number of windows')
 parser.add_argument('-xrange',type=float,default=[-8,8],nargs='+',help='x-range')
-parser.add_argument('-k',type=float,default=50,help='k')
+parser.add_argument('-k',type=float,default=10,help='k')
 parser.add_argument('-fylim',type=float,default=[-1,1],nargs='+',help='ylims for potential')
 parser.add_argument('-w',type=str,default='win-pot{:d}.dat',help='file with window potential data')
-parser.add_argument('-f',type=str,default='f-pot{:d}.dat',help='file with potential data')
+parser.add_argument('-f',type=str,default='f-pot.dat',help='file with potential data')
 parser.add_argument('-p',type=str,default='p{:d}.dat',help='file with histogram data')
 #parser.add_argument('-l',type=str,default='log.dat',help='log of x')
 #parser.add_argument('-hist',type=str,default='p0.dat',help='file with histogram')
@@ -18,12 +18,11 @@ parser.add_argument('-o',type=str,default='out.png',help='output file')
 
 args=parser.parse_args()
 
+fdat=np.loadtxt(args.f).T
 wdat=[]
-fdat=[]
 pdat=[]
 for i in range(args.n):
     wdat.append(np.loadtxt(args.w.format(i)).T)
-    fdat.append(np.loadtxt(args.f.format(i)).T)
     pdat.append(np.loadtxt(args.p.format(i)).T)
 
 plt,ax=plt.subplots(1,3,figsize=(16,5))
@@ -36,7 +35,7 @@ cmap=cm.get_cmap('inferno')
 
 for i in range(args.n):
     ax[0].plot(wdat[i][0],wdat[i][1],label='{:d}'.format(i),color=cmap(i/args.n))
-ax[0].plot(fdat[0][0],fdat[0][1],label='f(x)')
+ax[0].plot(fdat[0],fdat[1],label='f(x)')
 
 #ax[0].legend()
 
@@ -47,9 +46,9 @@ for i in range(args.n):
     ax[1].plot(0.5*(pdat[i][0]+pdat[i][1]),pdat[i][2],label='{:d}'.format(i),color=cmap(i/args.n))
     M.append(pdat[i][2].sum())
 
-
 # wham
 
+# window potential
 def W(x,x0,k):
     return 0.5*k*(x-x0)**2
 
@@ -88,7 +87,6 @@ while iterating:
         iterating=True
         ii+=1
         
-
 ax[2].plot(X,-T*np.log(P0),label='P0')
 ax[2].set_xlabel('x')
 ax[2].set_ylabel('$F(x)$')
