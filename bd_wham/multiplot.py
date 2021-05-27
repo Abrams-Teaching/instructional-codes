@@ -5,17 +5,17 @@ import matplotlib.cm as cm
 
 parser=ap.ArgumentParser()
 
-parser.add_argument('-n',type=int,default=16,help='number of windows')
-parser.add_argument('-zlim',type=float,default=[-8,8],nargs='+',help='limits on histogram domain')
-parser.add_argument('-k',type=float,default=16,help='window potential spring constant')
-parser.add_argument('-T',type=float,default=1.0,help='temperature')
-parser.add_argument('-tol',type=float,default=1.0e-6,help='WHAM tolerance')
-parser.add_argument('-fylim',type=float,default=[-15,15],nargs='+',help='ylims for potential plot')
-parser.add_argument('-p',type=str,default='p{:d}.dat',help='filename format for window histograms')
-parser.add_argument('-fpot',type=str,default='f-pot.dat',help='file containing governing potential vs z')
-parser.add_argument('-w',type=str,default='win-pot{:d}.dat',help='files containing window potentials')
-parser.add_argument('-o',type=str,default='out.png',help='output plot image file')
-parser.add_argument('-of',type=str,default='F.dat',help='output data file containing F vs z')
+parser.add_argument('-n',metavar='<int>',type=int,default=16,help='number of windows')
+parser.add_argument('-zlim',metavar=('zmin','zmax'),type=float,default=[-8,8],nargs=2,help='limits on histogram domain')
+parser.add_argument('-k',metavar='<float>',type=float,default=16,help='window potential spring constant')
+parser.add_argument('-T',metavar='<float>',type=float,default=1.0,help='temperature')
+parser.add_argument('-tol',metavar='<float>',type=float,default=1.0e-6,help='WHAM tolerance')
+parser.add_argument('-fylim',metavar=('y-low','y-high'),type=float,default=[-15,15],nargs=2,help='ylims for potential plot')
+parser.add_argument('-p',metavar='<str>',type=str,default='p{:d}.dat',help='filename format for window histograms')
+parser.add_argument('-fpot',metavar='<str>',type=str,default='f-pot.dat',help='file containing governing potential vs z')
+parser.add_argument('-w',metavar='<str>',type=str,default='win-pot{:d}.dat',help='files containing window potentials')
+parser.add_argument('-o',metavar='<str>',type=str,default='out.png',help='output plot image file')
+parser.add_argument('-of',metavar='<str>',type=str,default='F.dat',help='output data file containing F vs z')
 args=parser.parse_args()
 
 fdat=np.loadtxt(args.fpot).T

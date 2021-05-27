@@ -13,12 +13,11 @@ import matplotlib.pyplot as plt
 nPe_detected=os.cpu_count()
 
 parser=ap.ArgumentParser()
-parser.add_argument('-np',type=int,default=4,help='number of processors to use in parallel')
-parser.add_argument('-o',type=str,default='plot.png',help='plot file name')
-parser.add_argument('-n',type=int,default=16,help='number of windows')
-parser.add_argument('-T',type=float,default=1.0,help='Temperature')
-parser.add_argument('-k',type=float,default=10.0,help='Window potential spring constant')
-parser.add_argument('-zlim',type=float,default=[-8,8],nargs='+',help='limits on histogram domain')
+parser.add_argument('-np',metavar='<int>',type=int,default=4,help='number of processors to use in parallel')
+parser.add_argument('-n',metavar='<int>',type=int,default=16,help='number of windows')
+parser.add_argument('-T',metavar='<float>',type=float,default=1.0,help='Temperature')
+parser.add_argument('-k',metavar='<float>',type=float,default=10.0,help='Window potential spring constant')
+parser.add_argument('-zlim',metavar=('zmin<float>','zmax<float>'),type=float,default=[-8,8],nargs=2,help='limits on histogram domain')
 args=parser.parse_args()
 # Determine number requested (if any)
 nPe=args.np
