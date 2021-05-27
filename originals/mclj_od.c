@@ -1,15 +1,16 @@
 /* 
    Metropolis Monte Carlo simulation of a Lennard-Jones fluid
-   with Widom test-particle insertion to compute mu_ex
+   with Widom test-particle insertion to compute mu_ex using
+   the overlapping distribution method
 
    Cameron F. Abrams
 
    Written for the course CHE T580, Modern Molecular Simulation
    Spring 20-21
 
-   compile using "gcc -o mclj_widom mclj_widom.c -lm -lgsl"
+   compile using "gcc -o mclj_od mclj_od.c -lm -lgsl"
 
-   runs as "./mclj_widom -N <number_of_particles> -rho <density> \
+   runs as "./mclj_od -N <number_of_particles> -rho <density> \
                     -nc <numcycles(1e6)>  -dr <delta-r> \
 		                -s <seed(?)> -ne <#equil.cycles(100)>"
 
@@ -24,6 +25,7 @@
 #include <string.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_histogram.h>
 
 /* energy of particle i */
 double e_i ( int i, double * rx, double * ry, double * rz, int N, double L,
@@ -73,6 +75,7 @@ double total_e ( double * rx, double * ry, double * rz, int N, double L,
   return e;
 }
 
+
 /* Writes configuration in XYZ format */
 void write_xyz(FILE * fp, double * rx, double * ry, double * rz, int n, double L) {
   int i;
@@ -114,7 +117,7 @@ void init ( double * rx, double * ry, double * rz,
   }
 }
 
-void widom ( double * rx, double * ry, double * rz, int N, double L, 
+void make_real ( double * rx, double * ry, double * rz, int N, double L, 
 	     double rc2, int shift, double ecut,
 	     gsl_rng * r, double * e ) {
 
@@ -127,9 +130,9 @@ void widom ( double * rx, double * ry, double * rz, int N, double L,
   rz[N]=(gsl_rng_uniform(r)-0.5)*L;
 
   for (j=0;j<N;j++) {
-    dx  = (rx[N]-rx[j]);
-    dy  = (ry[N]-ry[j]);
-    dz  = (rz[N]-rz[j]);
+    dx  = rx[N]-rx[j];
+    dy  = ry[N]-ry[j];
+    dz  = rz[N]-rz[j];
     if (dx>hL)       dx-=L;
     else if (dx<-hL) dx+=L;
     if (dy>hL)       dy-=L;
@@ -144,19 +147,30 @@ void widom ( double * rx, double * ry, double * rz, int N, double L,
   }
 }
 
+int make_pdf(gsl_histogram * h, int noutside) {
+  double norm1=gsl_histogram_sum(h), bs, scale;
+  int i;
+  for (i=0;i<h->n;i++) {
+    bs=h->range[i+1]-h->range[i];
+    scale=1.0/(bs*(norm1+noutside));
+    h->bin[i]*=scale;
+  }
+  return 0;
+}
+
 enum {XYZ, NONE};
 int main ( int argc, char * argv[] ) {
 
   double * rx, * ry, * rz;
   int N=216,c,a,p;
   double L=0.0;
-  double we, w_sum;
+  double we;
   double beta;
-  double rho=0.5, T=1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
-  double E_new, E_old, esum, rr3, ecor, ecut;
-  double ei_new, ei_old, ivir_new, ivir_old;
+  double rho=0.5, T=1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V, E_old;
+  double ei_new, ei_old, delta_e, ivir_old, ivir_new, delta_vir, esum, rr3, ecor, ecut;
   double dr=0.2,dx,dy,dz;
   double rxold,ryold,rzold;
+  double w_sum;
   int i,j;
   int nCycles = 10, nSamp, nEq=1000;
   int nAcc;
@@ -164,6 +178,13 @@ int main ( int argc, char * argv[] ) {
   int shift=0;
   int tailcorr=1;
   int prog=0;
+  int hist_n=100;
+  double du_min=-30,du_max=30;
+  gsl_histogram * h;
+  int which_sim=0;
+  char pfn[255];
+  double bf;
+  int noutside=0;
 
   gsl_rng * r = gsl_rng_alloc(gsl_rng_mt19937);
   unsigned long int Seed = 23410981;
@@ -186,6 +207,10 @@ int main ( int argc, char * argv[] ) {
     else if (!strcmp(argv[i],"+tc")) tailcorr=0;
     else if (!strcmp(argv[i],"-sh")) shift=1;
     else if (!strcmp(argv[i],"-prog")) prog = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-which-sim")) which_sim = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-hist-n")) hist_n = atoi(argv[++i]);
+    else if (!strcmp(argv[i],"-du-min")) du_min = atof(argv[++i]);
+    else if (!strcmp(argv[i],"-du-max")) du_max = atof(argv[++i]);    
     else if (!strcmp(argv[i],"-s")) 
       Seed = (unsigned long)atoi(argv[++i]);
     else if (!strcmp(argv[i],"-traj_samp")) traj_samp = atoi(argv[++i]);
@@ -203,6 +228,13 @@ int main ( int argc, char * argv[] ) {
       fprintf(stderr,"Error.  Argument '%s' is not recognized.\n",argv[i]);
       exit(-1);
     }
+  }
+
+  /* Allocate the histogram for Delta-U */
+  h = gsl_histogram_alloc(hist_n);
+  if (gsl_histogram_set_ranges_uniform(h,du_min,du_max)) {
+    printf("Histogram error.\n");
+    exit(-1);
   }
 
   /* Compute the side-length */
@@ -225,6 +257,7 @@ int main ( int argc, char * argv[] ) {
   
   /* Output some initial information */
   fprintf(stdout,"# NVT MC Simulation of a Lennard-Jones fluid\n");
+  fprintf(stdout,"# Overlapping distribution method, simulation %d\n",which_sim);
   fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf\n",
 	  L,rho,N,sqrt(rc2));
   fprintf(stdout,"# nCycles %i, nEq %i, seed %lu, dR %.5lf\n",
@@ -256,7 +289,7 @@ int main ( int argc, char * argv[] ) {
   esum = 0.0;
   nSamp = 0;
   p_sum = 0.0;
-  w_sum=0.0;
+  w_sum = 0.0;
   if (prog>0) {
     printf("#LABEL cycle <e>/<n> p mu_ex\n");
   }
@@ -269,6 +302,9 @@ int main ( int argc, char * argv[] ) {
     dz = dr*(0.5-gsl_rng_uniform(r));
     //printf("%d %.6lf %.6lf %.6lf\n",i,dx,dy,dz);
     ei_old=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&ivir_old,0);
+    if (which_sim==1&&c>nEq) {
+      gsl_histogram_increment(h,ei_old); // energy change if ptcl were deleted
+    }
     /* Save the current position of particle i */
     rxold=rx[i];
     ryold=ry[i];
@@ -286,15 +322,17 @@ int main ( int argc, char * argv[] ) {
     if (ry[i]>L)   ry[i]-=L;
     if (rz[i]<0.0) rz[i]+=L;
     if (rz[i]>L)   rz[i]-=L;
-
     ei_new=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&ivir_new,0);
+    /* Get the new energy */
+    //E_new = total_e(rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&vir);
+    delta_e=ei_new-ei_old;
+    delta_vir=ivir_new-ivir_old;
 
     /* Conditionally accept... */
-    if (gsl_rng_uniform(r) < exp(-beta*(ei_new-ei_old))) {
-      E_old+=ei_new-ei_old;
-      vir_old+=ivir_new-ivir_old;
+    if (gsl_rng_uniform(r) < exp(-beta*delta_e)) {
+      E_old+=delta_e;
+      vir_old+=delta_vir;
       nAcc++;
-      //printf("%d %.5lf %.5lf %d\n",c,E_new,E_old,nAcc);
     }
     /* ... or reject the move; reassign the old positions */
     else {
@@ -308,12 +346,14 @@ int main ( int argc, char * argv[] ) {
     if (c>nEq) {
       esum+=E_old;
       p_sum+=vir_old/3.0/V+pcor;
-      widom(rx,ry,rz,N,L,rc2,shift,ecut,r,&we);
-      w_sum+=exp(-beta*we);
+      if (which_sim==0) {
+        make_real(rx,ry,rz,N,L,rc2,shift,ecut,r,&we);
+        if (gsl_histogram_increment(h,we)==GSL_EDOM) noutside++;
+        w_sum+=exp(-beta*we);
+      }
       nSamp++;
       if (prog>0&&!(c%prog)) {
-        printf("% 10i % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho/beta,
-              -T*log(w_sum/nSamp) + (tailcorr?(2*ecor):0));
+        printf("% 10i % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp));
         fflush(stdout);
       }
     }
@@ -327,13 +367,18 @@ int main ( int argc, char * argv[] ) {
     }
   }
 
+  make_pdf(h,noutside);
+  sprintf(pfn,"p%d.dat",which_sim);
+  fp=fopen(pfn,"w");
+  gsl_histogram_fprintf(fp,h,"%.5lf","%.8le");
+  fclose(fp);
+  fprintf(stdout,"Created %s\n",pfn);
   /* Output delta-r, the acceptance ratio, 
      and the average energy/particle */
   if (short_out)
-    fprintf(stdout,"%.6lf %.5lf %.5lf %.5lf %.5lf %.5lf\n",
+    fprintf(stdout,"%.6lf %.5lf %.5lf %.5lf %.5lf\n",
 	    dr,((double)nAcc)/(N*nCycles),
-	    esum/nSamp/N,p_sum/nSamp+rho/beta,
-      rho,-log(w_sum/nSamp)*T + (tailcorr?(2*ecor):0));
+	    esum/nSamp/N,p_sum/nSamp+rho*T);
   else
     fprintf(stdout,"NVT Metropolis Monte Carlo Simulation"
 	    " of the Lennard-Jones fluid.\n"
@@ -355,16 +400,15 @@ int main ( int argc, char * argv[] ) {
 	    "Ideal gas pressure:               %8.5lf\n"
 	    "Virial:                           %8.5lf\n"
 	    "Total pressure:                   %8.5lf\n"
-      "Excess chemical potential:        %8.5lf\n"
+      "Widom estimate mu_ex:             %8.5lf\n"
 	    "Program ends.\n",
 	    N,nCycles,sqrt(rc2),dr,rho,T,
 	    tailcorr?"Yes":"No",shift?"Yes":"No",
 	    ecor,pcor,ecut,
-	    ((double)nAcc)/(N*nCycles),
+	    ((double)nAcc)/nCycles,
 	    esum/nSamp/N,
 	    rho/beta,p_sum/nSamp,
-	    p_sum/nSamp+rho/beta,
-	    -log(w_sum/nSamp)*T + (tailcorr?(2*ecor):0));
+	    p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp));
   if (traj_fn) {
     fprintf(stdout,"Trajectory written to %s.\n",traj_fn);
   }
