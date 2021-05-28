@@ -256,7 +256,8 @@ int main ( int argc, char * argv[] ) {
     if (rz[i]>L)   rz[i]-=L;
 
     /* Get the change in enegy energy */
-    ei_new=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&ivir_new,0);
+    ei_new=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,
+               shift,ecut,&ivir_new,0);
     delta_e=ei_new-ei_old;
     delta_vir=ivir_new-ivir_old;
       
