@@ -169,7 +169,7 @@ int main ( int argc, char * argv[] ) {
   double ei_new, ei_old, delta_e, ivir_old, ivir_new, delta_vir, esum, rr3, ecor, ecut;
   double dr=0.2,dx,dy,dz;
   double rxold,ryold,rzold;
-  double w_sum;
+  double w_sum, anti_w_sum;
   int i,j;
   int nCycles = 10, nSamp, nEq=1000;
   int nAcc;
@@ -289,6 +289,7 @@ int main ( int argc, char * argv[] ) {
   nSamp = 0;
   p_sum = 0.0;
   w_sum = 0.0;
+  anti_w_sum = 0.0;
   if (prog>0) {
     printf("#LABEL cycle <e>/<n> p mu_ex\n");
   }
@@ -302,6 +303,7 @@ int main ( int argc, char * argv[] ) {
     ei_old=e_i(i,rx,ry,rz,N,L,rc2,tailcorr,ecor,shift,ecut,&ivir_old,0);
     if (which_sim==1&&c>nEq) {
       if (gsl_histogram_increment(h,ei_old)==GSL_EDOM) noutside++;
+      anti_w_sum+=exp(beta*ei_old);
     }
     /* Save the current position of particle i */
     rxold=rx[i];
@@ -351,7 +353,7 @@ int main ( int argc, char * argv[] ) {
       }
       nSamp++;
       if (prog>0&&!(c%prog)) {
-        printf("% 10i % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp));
+        printf("% 10i % .5f % .5f % .5f % .5f\n",c,esum/nSamp/N,p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp),T*log(anti_w_sum/nSamp));
         fflush(stdout);
       }
     }
@@ -371,12 +373,11 @@ int main ( int argc, char * argv[] ) {
   gsl_histogram_fprintf(fp,h,"%.5lf","%.8le");
   fclose(fp);
   fprintf(stdout,"Created %s\n",pfn);
-  /* Output delta-r, the acceptance ratio, 
-     and the average energy/particle */
+
   if (short_out)
-    fprintf(stdout,"%.6lf %.5lf %.5lf %.5lf %.5lf\n",
+    fprintf(stdout,"% .6lf % .5lf % .5lf % .5lf % .5lf % .5lf\n",
 	    dr,((double)nAcc)/(N*nCycles),
-	    esum/nSamp/N,p_sum/nSamp+rho*T);
+	    esum/nSamp/N,p_sum/nSamp+rho*T,-T*log(w_sum/nSamp));
   else
     fprintf(stdout,"NVT Metropolis Monte Carlo Simulation"
 	    " of the Lennard-Jones fluid.\n"
@@ -399,6 +400,7 @@ int main ( int argc, char * argv[] ) {
 	    "Virial:                           %8.5lf\n"
 	    "Total pressure:                   %8.5lf\n"
       "Widom estimate mu_ex:             %8.5lf\n"
+      "Anti-Widom estimate mu_ex:        %8.5lf\n"
 	    "Program ends.\n",
 	    N,nCycles,sqrt(rc2),dr,rho,T,
 	    tailcorr?"Yes":"No",shift?"Yes":"No",
@@ -406,7 +408,7 @@ int main ( int argc, char * argv[] ) {
 	    ((double)nAcc)/nCycles,
 	    esum/nSamp/N,
 	    rho/beta,p_sum/nSamp,
-	    p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp));
+	    p_sum/nSamp+rho/beta,-T*log(w_sum/nSamp),T*log(anti_w_sum/nSamp));
   if (traj_fn) {
     fprintf(stdout,"Trajectory written to %s.\n",traj_fn);
   }

@@ -1,9 +1,8 @@
-/* 1-D Brownian dynamics with Windows
+/* 1-D Brownian dynamics on a two-well potential with one harmonic restraint
    
    D R E X E L   U N I V E R S I T Y
    Department of Chemical and Biological Engineering
-   CHE 614 -- Thermodynamics II
-   C. F. Abrams -- Winter 1516
+   Cameron F. Abrams cfa22@drexel.edu
 
 */
 #include <stdio.h>
@@ -19,9 +18,10 @@ void f ( double x, double a, double b, double c, double * e, double * f ) {
   double x3=x2*x;
   double x4=x2*x2;
   double bb=b-2*a;
-  *e = a*x4+bb*x2 + c*x + a;
+  *e = a*x4 + bb*x2 + c*x + a;
   *f = -(4*a*x3+2*bb*x + c);
 }
+
 /* harmonic window potential centered on x0 */
 void w ( double x, double x0, double k, double * e, double * f ) {
     *e = 0.5*k*(x-x0)*(x-x0);
@@ -33,6 +33,7 @@ void write_f(char * fn, double a, double b, double c, double xmin, double xmax, 
   double e, fc;
   double x;
   double dx=(xmax-xmin)/n;
+  fprintf(fp,"#LABELS x V(x) -dV/dx\n");
   for (x=xmin+0.5*dx;x<=xmax;x+=dx) {
     f(x,a,b,c,&e,&fc);
     fprintf(fp,"% .5lf % .5lf % .5lf\n",x,e,fc);
@@ -40,11 +41,13 @@ void write_f(char * fn, double a, double b, double c, double xmin, double xmax, 
   fclose(fp);
   printf("Created %s.\n",fn);
 }
+
 void write_w(char * fn, double xwin, double kwin, double xmin, double xmax, int n) {
   FILE * fp=fopen(fn,"w");
   double e, fc;
   double x;
   double dx=(xmax-xmin)/n;
+  fprintf(fp,"#LABELS x W(x) -dW/dx\n");
   for (x=xmin+0.5*dx;x<=xmax;x+=dx) {
     w(x,xwin,kwin,&e,&fc);
     fprintf(fp,"% .5lf % .5lf % .5lf\n",x,e,fc);

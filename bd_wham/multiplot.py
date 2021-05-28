@@ -6,14 +6,16 @@ import matplotlib.cm as cm
 parser=ap.ArgumentParser()
 
 parser.add_argument('-n',metavar='<int>',type=int,default=16,help='number of windows')
+parser.add_argument('-pscale',metavar='<float>',type=float,default=1.e6,help='scale p0 for plot')
+parser.add_argument('-pxlim',metavar=('p-x-min','p-y-min'),type=float,nargs=2,default=[-12,12],help='limits on x-axis for plots')
 parser.add_argument('-zlim',metavar=('zmin','zmax'),type=float,default=[-8,8],nargs=2,help='limits on histogram domain')
 parser.add_argument('-k',metavar='<float>',type=float,default=16,help='window potential spring constant')
 parser.add_argument('-T',metavar='<float>',type=float,default=1.0,help='temperature')
 parser.add_argument('-tol',metavar='<float>',type=float,default=1.0e-6,help='WHAM tolerance')
 parser.add_argument('-fylim',metavar=('y-low','y-high'),type=float,default=[-15,15],nargs=2,help='ylims for potential plot')
 parser.add_argument('-p',metavar='<str>',type=str,default='p{:d}.dat',help='filename format for window histograms')
-parser.add_argument('-fpot',metavar='<str>',type=str,default='f-pot.dat',help='file containing governing potential vs z')
-parser.add_argument('-w',metavar='<str>',type=str,default='win-pot{:d}.dat',help='files containing window potentials')
+parser.add_argument('-fpot',metavar='<str>',type=str,default='V.dat',help='file containing governing potential vs z')
+parser.add_argument('-w',metavar='<str>',type=str,default='W{:d}.dat',help='files containing window potentials')
 parser.add_argument('-o',metavar='<str>',type=str,default='out.png',help='output plot image file')
 parser.add_argument('-of',metavar='<str>',type=str,default='F.dat',help='output data file containing F vs z')
 args=parser.parse_args()
@@ -28,23 +30,22 @@ for i in range(args.n):
 
 plt,ax=plt.subplots(1,3,figsize=(16,5))
 
-ax[0].set_xlabel('x')
-ax[0].set_ylabel('f(x),p(x)')
+ax[0].set_xlabel('$x$')
+ax[0].set_ylabel('$V(x)$, $W_i(x)$')
 ax[0].set_ylim(args.fylim)
-#ax[1].plot(fdat[0],fdat[1],label='f')
+ax[0].set_xlim(args.pxlim)
 cmap=cm.get_cmap('inferno')
-
 for i in range(args.n):
-    ax[0].plot(wdat[i][0],wdat[i][1],label='{:d}'.format(i),color=cmap(i/args.n))
-ax[0].plot(fdat[0],fdat[1],label='f(x)')
+    ax[0].plot(wdat[i][0],wdat[i][1],label='',color=cmap(i/args.n),alpha=0.4)
+ax[0].plot(fdat[0],fdat[1],label='V(x)')
+ax[0].legend()
 
-#ax[0].legend()
-
-ax[1].set_xlabel('x')
-ax[1].set_ylabel('p(x)')
+ax[1].set_xlabel('$x$')
+ax[1].set_ylabel('$H_i(x)$')
+ax[1].set_xlim(args.pxlim)
 M=[]
 for i in range(args.n):
-    ax[1].plot(0.5*(pdat[i][0]+pdat[i][1]),pdat[i][2],label='{:d}'.format(i),color=cmap(i/args.n))
+    ax[1].plot(0.5*(pdat[i][0]+pdat[i][1]),pdat[i][2],label='',color=cmap(i/args.n),alpha=0.4)
     M.append(pdat[i][2].sum())
 
 
@@ -88,10 +89,12 @@ while iterating:
         iterating=True
         ii+=1
         
-
-ax[2].plot(Z,-args.T*np.log(P0),label='P0')
+ax[1].plot(Z,P0*args.pscale,label='{:.2e}$P_0$'.format(args.pscale))
+ax[1].legend()
+ax[2].set_xlim(args.pxlim)
+ax[2].plot(Z,-args.T*np.log(P0),label='')
 ax[2].set_xlabel('x')
-ax[2].set_ylabel('$F(x)$')
+ax[2].set_ylabel('$F(x) = -k_BT\ln P_0$')
 
 plt.savefig(args.o,bbox_inches='tight')
 np.savetxt(args.of,np.array([Z,-args.T*np.log(P0)]).T)

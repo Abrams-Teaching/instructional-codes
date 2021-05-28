@@ -57,14 +57,14 @@ double e_i (int i, double * rx, double * ry, double * rz, int N, double L,
       r2 = dx*dx + dy*dy + dz*dz;
       if (r2<rc2) {
         r6i   = 1.0/(r2*r2*r2);
-        if (j==(N-1)) {
+        if (i==(N-1)||j==(N-1)) {
           e    += 4*(l5*r6i*r6i - l3*r6i) - (shift?ecut_l:0.0);
           *vir += 48*(l5*r6i*r6i-0.5*l3*r6i);
           *dudl += 4*(5*l4*r6i*r6i - 3*l2*r6i) - (shift?decutdl:0.0);
         }
         else {
           e    += 4*(r6i*r6i - r6i) - (shift?ecut:0.0);
-          *vir += 48*(r6i*r6i-l3*r6i);
+          *vir += 48*(r6i*r6i - 0.5*r6i);
         }
       }      
     }
@@ -141,7 +141,7 @@ int main ( int argc, char * argv[] ) {
   double ei_new, ei_old, delta_e;
   double ivir_new, ivir_old, delta_vir;
   double idudl_new, idudl_old, delta_dudl;
-  double lambda=1.0,decutdl,l2,l3,l4,l5,dudl_sum,dudl_old,dudl;
+  double lambda=1.0,decutdl,l2,l3,l4,l5,dudl_sum,dudl_old;
   double rxold,ryold,rzold;
   int i,j;
   int nCycles = 10, nSamp, nEq=1000;
@@ -257,7 +257,9 @@ int main ( int argc, char * argv[] ) {
   for (c=0;c<nCycles;c++) {
       /* Randomly select a particle */
       i=(int)gsl_rng_uniform_int(r,N);
-      ei_old=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,shift,ecut,ecut_l,decutdl,&ivir_old,&idudl_old,0);
+      ei_old=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,
+                 shift,ecut,ecut_l,decutdl,
+                 &ivir_old,&idudl_old,0);
       /* calculate displacement */
       dx = dr*(0.5-gsl_rng_uniform(r));
       dy = dr*(0.5-gsl_rng_uniform(r));
@@ -281,7 +283,9 @@ int main ( int argc, char * argv[] ) {
       if (rz[i]<0.0) rz[i]+=L;
       if (rz[i]>L)   rz[i]-=L;
 
-      ei_new=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,shift,ecut,ecut_l,decutdl,&ivir_new,&idudl_new,0);
+      ei_new=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,
+                 shift,ecut,ecut_l,decutdl,
+                 &ivir_new,&idudl_new,0);
       delta_e = ei_new-ei_old;
       delta_vir = ivir_new-ivir_old;
       delta_dudl = idudl_new-idudl_old;

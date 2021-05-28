@@ -32,16 +32,16 @@ wz=win_edges[:-1]+0.5*(args.zlim[1]-args.zlim[0])/args.n
 
 # Default values for program name and command-line arguments
 prg='bd-w'
-options={'ns':50000000,'k-win':args.k,'hist-n':1000,'T':args.T}
+options={'ns':200000000,'k-win':args.k,'hist-n':10000,'T':args.T}
 
 # build list of fully-resolved command names
 commands=[]
 for i,w in enumerate(wz):
     options['x-win']=w
     options['which-win']=i
-    options['plot-w']='win-pot{:d}.dat'.format(i)
+    options['plot-w']='W{:d}.dat'.format(i)
     if i==0:
-        options['plot-f']='f-pot.dat'
+        options['plot-f']='V.dat'
     log='log{:d}.out'.format(i)
     commands.append(r'./'+prg+' '+' '.join([' '.join(['-'+k,str(v)]) for k,v in options.items()])+' > {:s}'.format(log))
 
