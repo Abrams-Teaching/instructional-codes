@@ -26,21 +26,22 @@
 #include <math.h>
 #include <gsl/gsl_rng.h>
 
-/* An N^2 algorithm for computing the total energy.  The virial
-   is also computed and returned in *vir. */
-double total_e ( double * rx, double * ry, double * rz, int N, double L,
+
+double e_i (int i, double * rx, double * ry, double * rz, int N, double L,
 		 double rc2, double lambda, int tailcorr, double ecor, 
-		 int shift, double ecut, double ecut_l, double decutdl, double * vir, double * dudl ) {
-  int i,j;
+		 int shift, double ecut, double ecut_l, double decutdl, 
+     double * vir, double * dudl, int i0 ) {
+  
   double dx, dy, dz, r2, r6i;
   double e = 0.0, hL=L/2.0;
   double l2=lambda*lambda;
   double l3=l2*lambda;
   double l4=l3*lambda;
   double l5=l4*lambda;
+  int j;
   *vir=*dudl=0.0;
-  for (i=0;i<(N-1);i++) {
-    for (j=i+1;j<N;j++) {
+  for (j=i0;j<N;j++) {
+    if (j!=i) {
       dx  = rx[i]-rx[j];
       dy  = ry[i]-ry[j];
       dz  = rz[i]-rz[j];
@@ -64,11 +65,28 @@ double total_e ( double * rx, double * ry, double * rz, int N, double L,
         else {
           e    += 4*(r6i*r6i - r6i) - (shift?ecut:0.0);
           *vir += 48*(r6i*r6i-l3*r6i);
-        }       
-      }
+        }
+      }      
     }
   }
-  return e+(tailcorr?(N*ecor):0.0);
+  return e+(tailcorr?ecor:0.0);
+}
+
+/* An N^2 algorithm for computing the total energy.  The virial
+   is also computed and returned in *vir. */
+double total_e ( double * rx, double * ry, double * rz, int N, double L,
+		 double rc2, double lambda, int tailcorr, double ecor, 
+		 int shift, double ecut, double ecut_l, double decutdl, double * vir, double * dudl ) {
+  int i,j;
+  double tvir,tdudl,e,ei;
+  e=*vir=*dudl=0.0;
+  for (i=0;i<(N-1);i++) {
+    ei = e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,shift,ecut,ecut_l,decutdl,&tvir,&tdudl,i+1);
+    e  += ei;
+    *vir += tvir;
+    *dudl += tdudl;
+  }
+  return e;
 }
 
 /* Writes configuration in XYZ format */
@@ -117,9 +135,12 @@ int main ( int argc, char * argv[] ) {
   double * rx, * ry, * rz;
   int N=216,c,a,p;
   double L=0.0;
-  double rho=0.5, T=1.0, beta, rc2 = 3.5, vir, vir_old, pcor, V, p_sum;
-  double E_new, E_old, esum, rr3, ecor, ecut, ecut_l;
+  double rho=0.5, T=1.0, beta, rc2 = 3.5, vir_old, pcor, V, p_sum;
+  double E_old, esum, rr3, ecor, ecut, ecut_l;
   double dr=0.2,dx,dy,dz;
+  double ei_new, ei_old, delta_e;
+  double ivir_new, ivir_old, delta_vir;
+  double idudl_new, idudl_old, delta_dudl;
   double lambda=1.0,decutdl,l2,l3,l4,l5,dudl_sum,dudl_old,dudl;
   double rxold,ryold,rzold;
   int i,j;
@@ -198,8 +219,8 @@ int main ( int argc, char * argv[] ) {
   /* Output some initial information */
   fprintf(stdout,"# NVT MC Simulation of a Lennard-Jones fluid\n");
   fprintf(stdout,"# Using thermodynamic integration to compute mu_ex\n");
-  fprintf(stdout,"# L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf; lambda = %.5lf\n",
-	  L,rho,N,sqrt(rc2),lambda);
+  fprintf(stdout,"# T = %.3lf; L = %.5lf; rho = %.5lf; N = %i; rc = %.5lf; lambda = %.5lf\n",
+	  T,L,rho,N,sqrt(rc2),lambda);
   fprintf(stdout,"# nCycles %i, nEq %i, seed %lu, dR %.5lf\n",
 	  nCycles,nEq,Seed,dr);
   
@@ -234,9 +255,9 @@ int main ( int argc, char * argv[] ) {
     printf("#LABEL cycle <e>/<n> p <dU/dl>\n");
   }
   for (c=0;c<nCycles;c++) {
-    //for (p=0;p<N;p++) {
       /* Randomly select a particle */
       i=(int)gsl_rng_uniform_int(r,N);
+      ei_old=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,shift,ecut,ecut_l,decutdl,&ivir_old,&idudl_old,0);
       /* calculate displacement */
       dx = dr*(0.5-gsl_rng_uniform(r));
       dy = dr*(0.5-gsl_rng_uniform(r));
@@ -251,7 +272,7 @@ int main ( int argc, char * argv[] ) {
       rx[i]+=dx;
       ry[i]+=dy;
       rz[i]+=dz;
-
+      
       /* Apply periodic boundary conditions */
       if (rx[i]<0.0) rx[i]+=L;
       if (rx[i]>L)   rx[i]-=L;
@@ -260,17 +281,16 @@ int main ( int argc, char * argv[] ) {
       if (rz[i]<0.0) rz[i]+=L;
       if (rz[i]>L)   rz[i]-=L;
 
-      /* Get the new energy */
-      E_new = total_e(rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,
-		    shift,ecut,ecut_l,decutdl,&vir,&dudl);
-      
+      ei_new=e_i(i,rx,ry,rz,N,L,rc2,lambda,tailcorr,ecor,shift,ecut,ecut_l,decutdl,&ivir_new,&idudl_new,0);
+      delta_e = ei_new-ei_old;
+      delta_vir = ivir_new-ivir_old;
+      delta_dudl = idudl_new-idudl_old;
       /* Conditionally accept... */
-      if (gsl_rng_uniform(r) < exp(-beta*(E_new-E_old))) {
-        E_old=E_new;
-        vir_old=vir;
-        dudl_old=dudl;
+      if (gsl_rng_uniform(r) < exp(-beta*delta_e)) {
+        E_old+=delta_e;
+        vir_old+=delta_vir;
+        dudl_old+=delta_dudl;
         nAcc++;
-        //printf("%d %.5lf %.5lf %d\n",c,E_new,E_old,nAcc);
       }
       /* ... or reject the move; reassign the old positions */
       else {
