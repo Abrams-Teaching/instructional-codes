@@ -57,15 +57,13 @@ print("# Z domain [{:.5f},{:.5f}] in {:d} increments of {:.5f}".format(zz[0],zz[
 def W(x,x0,k):
     return 0.5*k*(x-x0)**2
 
-F=np.zeros(n) # initial window F's
-
 beta=1/(kB_kcal_per_mol*args.T)
 
+F=np.zeros(n) # initial window F's
 # calculate sum of all histograms
 sumH=np.zeros(nz)
 for i in range(n):
     sumH+=H[i]
-
 # WHAM convergence loop
 iterating = True
 ii=0

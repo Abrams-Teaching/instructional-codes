@@ -147,6 +147,9 @@ int main  ( int argc, char * argv [] ) {
   }
   sprintf(pfn,"p%d.dat",which_win);
   fp=fopen(pfn,"w");
+  fprintf(fp,"# gsl-histogram window %d center %.5lf k %.5lf\n",which_win,x_win,k_win);
+  fclose(fp);
+  fp=fopen(pfn,"a");
   gsl_histogram_fprintf(fp,h,"%.5lf","%.8le");
   fclose(fp);
   fprintf(stdout,"Created %s\n",pfn);
