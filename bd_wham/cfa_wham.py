@@ -6,6 +6,7 @@ import numpy as np
 import argparse as ap
 import matplotlib.cm as cm
 import scipy.constants as sc
+import warnings
 
 kB_kcal_per_mol=sc.physical_constants['Boltzmann constant'][0]/sc.calorie*sc.Avogadro/1.e3
 
@@ -23,14 +24,14 @@ parser.add_argument('-traj-filename-format',metavar='<str>',type=str,default='fr
 parser.add_argument('-print-every',metavar='<int>',type=int,default=10,help='print output to terminal every this many WHAM iterations')
 args=parser.parse_args()
 
-# load the input file.   Input file has one line per window simulation.
+# Read the input file.   Input file has one line per window simulation.
 # Each line reports z_0 (window potential anchor point), unique id number, and k (spring constant)
 setdat=np.loadtxt(args.i).T
 z0=setdat[0] # window potential centers
 ids=[int(_) for _ in setdat[1]]
 Ks=setdat[2] # spring constants
 
-# Read in each *.traj file, generate histogram, keep tally 
+# Read in each *.traj file, generate histograms, keep tally 
 H=[] # list of histograms
 M=[] # list of histogram sums
 for i,k in zip(ids,Ks):
@@ -51,15 +52,7 @@ zz=e[:-1]+0.5*dz
 nz=len(zz)
 print("# Z domain [{:.5f},{:.5f}] in {:d} increments of {:.5f}".format(zz[0],zz[-1],nz,dz))
 
-plt,ax=plt.subplots(1,2,figsize=args.figsize)
-ax[0].set_xlabel('$z$')
-ax[0].set_ylabel('$p_i(z)$')
-cmap=cm.get_cmap('inferno')
-for i,(z,h) in enumerate(zip(z0,H)):
-    ax[0].plot(zz,h,label='$z_0$ = {:.2f}'.format(z),color=cmap(i/len(H)))
-
 # wham
-
 # window potential
 def W(x,x0,k):
     return 0.5*k*(x-x0)**2
@@ -96,10 +89,27 @@ while iterating:
         iterating=True
         ii+=1
         
+# make plots
+fig,ax=plt.subplots(1,2,figsize=args.figsize)
+plt.subplots_adjust(wspace=0.25)
+ax[0].set_xlabel('$z$',fontsize=14)
+ax[0].set_ylabel('$H_i(z)$',fontsize=14)
+cmap=cm.get_cmap('inferno')
+for i,(z,h) in enumerate(zip(z0,H)):
+    ax[0].plot(zz,h,label='$z_0$ = {:.2f}'.format(z),color=cmap(i/len(H)))
 
-ax[1].plot(zz,-1./beta*np.log(P0))
-ax[1].set_xlabel('z')
-ax[1].set_ylabel('$F(z)$ (kcal/mol)')
+ymin,ymax=ax[0].get_ylim()
+for i,z in enumerate(z0):
+    ax[0].vlines(z,ymin,ymax,color=cmap(i/len(z0)),alpha=0.5)
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    ax[1].plot(zz,-1./beta*np.log(P0))
+    np.savetxt(args.of,np.array([zz,-1/beta*np.log(P0)]).T,fmt='%.5f',
+               header='distance(Angstrom) f(kcal/mol)')
+
+ax[1].set_xlim(args.zlim)
+ax[1].set_xlabel('$z$',fontsize=14)
+ax[1].set_ylabel('$F(z)$ (kcal/mol)',fontsize=14)
 
 plt.savefig(args.o,bbox_inches='tight')
-np.savetxt(args.of,np.array([zz,-1/beta*np.log(P0)]).T)

@@ -139,6 +139,7 @@ int main  ( int argc, char * argv [] ) {
     w(x,x_win,k_win,&e_win,&f_win);
     force+=f_win;
     e+=e_win;
+    /* Brownian dynamics */
     dx=h1*force+h2*2*(0.5-gsl_rng_uniform(r));
     x+=dx;
     if (log_every>0 && nsteps%log_every==0) fprintf(fp,"%d % .5f\n",i,x);
@@ -149,5 +150,4 @@ int main  ( int argc, char * argv [] ) {
   gsl_histogram_fprintf(fp,h,"%.5lf","%.8le");
   fclose(fp);
   fprintf(stdout,"Created %s\n",pfn);
-
 }
