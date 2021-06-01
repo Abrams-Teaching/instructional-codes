@@ -11,3 +11,9 @@ Cameron Abrams -- cfa22@drexel.edu
 ## Code from Frenkel and Smit
 
 Exercises from the Summer School that Daan Frankel and Berend Smit ran for many years has been made available here in `FrenkelSmitCodes/Exercises`.  To compile these programs you will need to be sure to have `make` and `gfortran` installed.
+
+## Additional Content
+
+1. MD Examples:  The `md_examples` directory has examples of using Gromacs and NAMD for simple MD simulations.
+2. WHAM:  The `wham` directory has two examples of using the weighted histogram analysis method.
+
