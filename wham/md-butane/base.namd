@@ -1,0 +1,50 @@
+structure butane.psf
+coordinates butane.pdb
+outputName window%W%
+set temperature %T%
+temperature $temperature
+
+paraTypeCharmm on
+parameters par_all35_ethers.prm
+
+exclude scaled1-4
+1-4scaling 1.0
+cutoff 10.0
+switching on
+switchdist 9.0
+pairlistdist 11.5
+timestep 1.0
+rigidbonds none
+
+nonbondedFreq 1
+fullElectFrequency 2
+stepspercycle 10
+
+dielectric 80
+
+langevin on
+langevinDamping 5
+langevinTemp $temperature
+langevinHydrogen no
+
+outputEnergies 10000
+dcdfreq 10000
+restartfreq 10000
+numsteps %NSTEPS% 
+
+colvars on
+cv config {
+    colvar {
+        name dist
+        distance {
+           group1 { atomNumbers 4 }  
+           group2 { atomNumbers 14 }
+        }
+    }
+    harmonic {
+        colvars dist
+        forceconstant %K%
+        centers %Z0%
+    }
+    colvarsTrajFrequency 10
+}

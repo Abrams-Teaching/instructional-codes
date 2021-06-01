@@ -72,3 +72,5 @@ $ python ../multiplot.py -n 16 -of tp1.dat  -o tp1.png -T 0.5 -k 15.0 -zlim -8 8
 The output image:
 
 ![plot](tp1.png)
+
+`baseplot.py` simply performs a Boltzmann inversion of a histogram of the degree of freedom, and is intended for generation of a Landau free energy from a single long MD simulation.

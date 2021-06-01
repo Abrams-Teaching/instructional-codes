@@ -16,20 +16,21 @@ parser.add_argument('-nbins',metavar='<int>',type=int,default=1000,help='number 
 parser.add_argument('-zlim',metavar=('zmin','zmax'),type=float,default=[2,5],nargs=2,help='limits on histogram domain')
 parser.add_argument('-T',metavar='<float>',type=float,default=310,help='temperature')
 parser.add_argument('-tol',metavar='<float>',type=float,default=1.0e-6,help='WHAM tolerance')
-parser.add_argument('-figsize',type=float,nargs=2,default=[6,4],help='figure size')
+parser.add_argument('-figsize',type=float,nargs=2,default=[9,4],help='figure size')
 parser.add_argument('-skip',type=int,default=0,help='skip this many lines at beginning of raw data files')
 parser.add_argument('-of',metavar='<str>',type=str,default='F.dat',help='output data file F vs z')
 parser.add_argument('-o',metavar='<str>',type=str,default='plot.png',help='output plot of F vs z')
+parser.add_argument('-traj-long-md',metavar='<str>',type=str,default='',help='traj file of long MD run')
 parser.add_argument('-traj-filename-format',metavar='<str>',type=str,default='frm{:d}_{:.0f}-run.colvars.traj',help='traj filename format')
 parser.add_argument('-print-every',metavar='<int>',type=int,default=10,help='print output to terminal every this many WHAM iterations')
 args=parser.parse_args()
 
 # Read the input file.   Input file has one line per window simulation.
-# Each line reports z_0 (window potential anchor point), unique id number, and k (spring constant)
+# Each line reports unique id number,  k (spring constant), and z_0 (window potential anchor point)
 setdat=np.loadtxt(args.i).T
-z0=setdat[0] # window potential centers
-ids=[int(_) for _ in setdat[1]]
-Ks=setdat[2] # spring constants
+ids=[int(_) for _ in setdat[0]]
+Ks=setdat[1] # spring constants
+z0=setdat[2] # window potential centers
 
 # Read in each *.traj file, generate histograms, keep tally 
 H=[] # list of histograms
@@ -57,13 +58,15 @@ print("# Z domain [{:.5f},{:.5f}] in {:d} increments of {:.5f}".format(zz[0],zz[
 def W(x,x0,k):
     return 0.5*k*(x-x0)**2
 
+F=np.zeros(n) # initial window F's
+
 beta=1/(kB_kcal_per_mol*args.T)
 
-F=np.zeros(n) # initial window F's
 # calculate sum of all histograms
 sumH=np.zeros(nz)
 for i in range(n):
     sumH+=H[i]
+
 # WHAM convergence loop
 iterating = True
 ii=0
@@ -86,7 +89,14 @@ while iterating:
     if sqerr>args.tol:
         iterating=True
         ii+=1
-        
+
+hlong=None
+if args.traj_long_md != '':
+    fn=args.traj_long_md
+    print("# Reading/processing {:s}...".format(fn))
+    t,z=np.loadtxt(fn,unpack=True)
+    hlong,e=np.histogram(z[args.skip:],args.nbins,range=args.zlim)
+
 # make plots
 fig,ax=plt.subplots(1,2,figsize=args.figsize)
 plt.subplots_adjust(wspace=0.25)
@@ -102,10 +112,14 @@ for i,z in enumerate(z0):
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    ax[1].plot(zz,-1./beta*np.log(P0))
+    ff=-1./beta*np.log(P0)
+    ax[1].plot(zz,ff-ff.min(),label='WHAM')
     np.savetxt(args.of,np.array([zz,-1/beta*np.log(P0)]).T,fmt='%.5f',
                header='distance(Angstrom) f(kcal/mol)')
-
+    if args.traj_long_md != '':
+        flong=-1./beta*np.log(hlong)
+        ax[1].plot(zz,flong-flong.min(),'k--',label='long MD',alpha=0.33)
+        ax[1].legend()
 ax[1].set_xlim(args.zlim)
 ax[1].set_xlabel('$z$',fontsize=14)
 ax[1].set_ylabel('$F(z)$ (kcal/mol)',fontsize=14)
