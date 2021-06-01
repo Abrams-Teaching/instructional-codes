@@ -42,13 +42,13 @@ void write_f(char * fn, double a, double b, double c, double xmin, double xmax, 
   printf("Created %s.\n",fn);
 }
 
-void write_w(char * fn, double xwin, double kwin, double xmin, double xmax, int n) {
+void write_w(char * fn, double xwin, double kwin, double xmin, double xmax, int n, double xpad) {
   FILE * fp=fopen(fn,"w");
   double e, fc;
   double x;
-  double dx=(xmax-xmin)/n;
+  double dx=(xmax-xmin+2*xpad)/n;
   fprintf(fp,"#LABELS x W(x) -dW/dx\n");
-  for (x=xmin+0.5*dx;x<=xmax;x+=dx) {
+  for (x=xmin+0.5*dx-xpad;x<=xmax+xpad;x+=dx) {
     w(x,xwin,kwin,&e,&fc);
     fprintf(fp,"% .5lf % .5lf % .5lf\n",x,e,fc);
   }
@@ -69,6 +69,7 @@ int main  ( int argc, char * argv [] ) {
   char * plot_f=NULL;
   char * plot_w=NULL;
   double x_win = 0.0;
+  double x_pad = 1.0;
   double k_win = 1.0;
   double e_win, f_win;
   int which_win=0;
@@ -98,6 +99,7 @@ int main  ( int argc, char * argv [] ) {
     else if (!strcmp(argv[i],"-hist-n")) hist_n = atoi(argv[++i]);
     else if (!strcmp(argv[i],"-x-min")) x_min=atof(argv[++i]);
     else if (!strcmp(argv[i],"-x-max")) x_max=atof(argv[++i]);
+    else if (!strcmp(argv[i],"-x-pad")) x_pad=atof(argv[++i]);
     else if (!strcmp(argv[i],"-x-win")) x_win=atof(argv[++i]);
     else if (!strcmp(argv[i],"-k-win")) k_win=atof(argv[++i]);
     else if (!strcmp(argv[i],"-which-win")) which_win=atoi(argv[++i]);
@@ -113,7 +115,7 @@ int main  ( int argc, char * argv [] ) {
   }
 
   if (plot_f) write_f(plot_f,a,b,c,x_min,x_max,hist_n);
-  if (plot_w) write_w(plot_w,x_win,k_win,x_min,x_max,hist_n);
+  if (plot_w) write_w(plot_w,x_win,k_win,x_min,x_max,hist_n,x_pad);
 
   /* Allocate the histogram for Delta-U */
   h = gsl_histogram_alloc(hist_n);
@@ -139,7 +141,7 @@ int main  ( int argc, char * argv [] ) {
     w(x,x_win,k_win,&e_win,&f_win);
     force+=f_win;
     e+=e_win;
-    /* Brownian dynamics */
+    /* Brownian dynamics: gsl_rng_uniform() returns on [0,1] */
     dx=h1*force+h2*2*(0.5-gsl_rng_uniform(r));
     x+=dx;
     if (log_every>0 && nsteps%log_every==0) fprintf(fp,"%d % .5f\n",i,x);

@@ -2,17 +2,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse as ap
 import matplotlib.cm as cm
+import warnings
 
 parser=ap.ArgumentParser()
 
 parser.add_argument('-n',metavar='<int>',type=int,default=16,help='number of windows')
-parser.add_argument('-pscale',metavar='<float>',type=float,default=1.e6,help='scale p0 for plot')
 parser.add_argument('-pxlim',metavar=('p-x-min','p-y-min'),type=float,nargs=2,default=[-12,12],help='limits on x-axis for plots')
 parser.add_argument('-zlim',metavar=('zmin','zmax'),type=float,default=[-8,8],nargs=2,help='limits on histogram domain')
 parser.add_argument('-k',metavar='<float>',type=float,default=15,help='window potential spring constant')
 parser.add_argument('-T',metavar='<float>',type=float,default=1.0,help='temperature')
 parser.add_argument('-tol',metavar='<float>',type=float,default=1.0e-6,help='WHAM tolerance')
-parser.add_argument('-fylim',metavar=('y-low','y-high'),type=float,default=[0,30],nargs=2,help='ylims for potential plot')
+parser.add_argument('-fylim',metavar=('y-low','y-high'),type=float,default=[0,25],nargs=2,help='ylims for potential plot')
+parser.add_argument('-pscale',metavar='<str>',type=str,default='linear',help='y-axis scaling for histograms')
 parser.add_argument('-p',metavar='<str>',type=str,default='p{:d}.dat',help='filename format for window histograms')
 parser.add_argument('-fpot',metavar='<str>',type=str,default='V.dat',help='file containing governing potential vs z')
 parser.add_argument('-w',metavar='<str>',type=str,default='W{:d}.dat',help='files containing window potentials')
@@ -37,7 +38,7 @@ ax[0].set_xlim(args.pxlim)
 cmap=cm.get_cmap('inferno')
 for i in range(args.n):
     ax[0].plot(wdat[i][0],wdat[i][1],label='',color=cmap(i/args.n),alpha=0.4)
-ax[0].plot(fdat[0],fdat[1]-fdat[1].min(),label='V(x)')
+ax[0].plot(fdat[0],fdat[1]-fdat[1].min(),label='V(x)',linewidth=2)
 ax[0].legend()
 
 ax[1].set_xlabel('$x$')
@@ -59,7 +60,6 @@ M=np.array(M)
 k = args.k
 win_edges = np.linspace(args.zlim[0],args.zlim[1],args.n+1)
 wz=win_edges[:-1]+0.5*(args.zlim[1]-args.zlim[0])/args.n
-print("window centers",wz)
 Z=fdat[0][:]
 
 beta=1/args.T
@@ -92,12 +92,19 @@ while iterating:
 
 ymin,ymax=ax[1].get_ylim()
 pscale=ymax/P0.max()
-ax[1].plot(Z,P0*pscale,label='{:.2e}$P_0$'.format(pscale))
+ax[1].plot(Z,P0*pscale,label='{:.2e}$P_0$'.format(pscale),linewidth=2)
 ax[1].legend()
+ax[1].set_yscale(args.pscale)
 ax[2].set_xlim(args.pxlim)
-ax[2].plot(Z,-args.T*np.log(P0),label='')
+ax[2].set_yscale(args.pscale)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    F=-args.T*np.log(P0)
+ax[2].plot(fdat[0],fdat[1]-fdat[1].min(),label='V(x)',linewidth=2,alpha=0.2)
+ax[2].plot(Z,F-F.min(),label='F(x)',linewidth=2)
 ax[2].set_xlabel('x')
 ax[2].set_ylabel('$F(x) = -k_BT\ln P_0$')
-
+ax[2].set_ylim(args.fylim)
+ax[2].legend()
 plt.savefig(args.o,bbox_inches='tight')
-np.savetxt(args.of,np.array([Z,-args.T*np.log(P0)]).T)
+np.savetxt(args.of,np.array([Z,F]).T)

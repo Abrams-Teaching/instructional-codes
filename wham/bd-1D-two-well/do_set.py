@@ -23,7 +23,6 @@ parser.add_argument('-zlim',metavar=('zmin<float>','zmax<float>'),type=float,def
 args=parser.parse_args()
 # Determine number requested (if any)
 nPe=args.np
-# Don't allow number of CPU's to be exceeded
 if nPe>nPe_detected:
     print('Warning: requested {:d} processors but only {:d} are found.'.format(nPe,nPe_detected))
     nPe=nPe_detected
@@ -31,7 +30,6 @@ if nPe>nPe_detected:
 # windows 
 win_edges = np.linspace(args.zlim[0],args.zlim[1],args.n+1)
 wz=win_edges[:-1]+0.5*(args.zlim[1]-args.zlim[0])/args.n
-print("window centers:",wz)
 # Default values for program name and command-line arguments
 prg='./bd-w'
 options={'ns':args.nsteps,'k-win':args.k,'hist-n':args.hist_n,'T':args.T}
@@ -44,7 +42,10 @@ for i,w in enumerate(wz):
     options['plot-w']='W{:d}.dat'.format(i)
     if i==0:
         options['plot-f']='V.dat'
-    print(options)
+    else:
+        if 'plot-f' in options:
+            del options['plot-f']
+    #print(options)
     log='log{:d}.out'.format(i)
     commands.append(prg+' '+' '.join([' '.join(['-'+k,str(v)]) for k,v in options.items()])+' > {:s}'.format(log))
 
