@@ -2,8 +2,7 @@
    
    D R E X E L   U N I V E R S I T Y
    Department of Chemical and Biological Engineering
-   CHE 614 -- Thermodynamics II
-   C. F. Abrams -- Winter 1516
+   CHET 580 -- Modern Molecular Simulations
 
 */
 #include <stdio.h>
@@ -112,7 +111,7 @@ int main  ( int argc, char * argv [] ) {
   if (plot_f) write_f(plot_f,a,b,c,x_min,x_max,hist_n);
   if (plot_w) write_w(plot_w,x_win,k_win,x_min,x_max,hist_n);
 
-  /* Allocate the histogram for Delta-U */
+  /* Allocate the histogram for x */
   h = gsl_histogram_alloc(hist_n);
   if (gsl_histogram_set_ranges_uniform(h,x_min,x_max)) {
     printf("Histogram error.\n");
