@@ -153,7 +153,7 @@ int main  ( int argc, char * argv [] ) {
       sprintf(log_fn,log_fnf,i);
       log_fp[i]=fopen(log_fn,"w");
       fprintf(log_fp[i],"# Replica %i T = %.5lf\n",i,T[i]);
-      fprintf(log_fp[i],"%d % .5f\n",0,x);
+      fprintf(log_fp[i],"%d % .5f %.5f\n",0,x,0);
       fflush(log_fp[i]);
     }
   }

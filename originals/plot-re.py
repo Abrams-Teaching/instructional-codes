@@ -23,3 +23,8 @@ ax.set_xlabel('$x$')
 ax.set_ylabel('$H_i(x)$')
 ax.legend()
 plt.savefig(args.o,bbox_inches='tight')
+
+t,x,a=np.loadtxt("rep0.log",unpack=True,)
+fig,ax=plt.subplots(1,1,figsize=args.figsize)
+ax.plot(t,x)
+plt.savefig('trace.png')
