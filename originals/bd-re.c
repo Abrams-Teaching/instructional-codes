@@ -37,9 +37,12 @@ void write_f(char * fn, double a, double b, double c, double xmin, double xmax, 
 }
 
 
-void my_swap(int i, int j, double * x) {
+void my_swap(int i, int j, double * x, int * c) {
   double tmp;
-  gsl_histogram * th;
+  int oci=c[i];
+  int ocj=c[j];
+  c[j]=oci;
+  c[i]=ocj;
   tmp=x[i];
   x[i]=x[j];
   x[j]=tmp;
@@ -60,6 +63,7 @@ int main  ( int argc, char * argv [] ) {
   double b = -1.0;
   double c = 0.0;
   char * plot_f=NULL;
+  int * cfgi_atT;
 
   int log_every=0;
   FILE ** log_fp;
@@ -110,6 +114,7 @@ int main  ( int argc, char * argv [] ) {
   e=(double*)malloc(nrep*sizeof(double));
   nswapattempts=(int*)malloc(nrep*sizeof(int));
   nswapaccepts=(int*)malloc(nrep*sizeof(int));
+  cfgi_atT=(int*)malloc(nrep*sizeof(int));
   log_fp=(FILE**)malloc(nrep*sizeof(FILE*));
   if (nrep>1) {
     k=log(Tmax/Tmin)/(nrep-1);
@@ -120,6 +125,7 @@ int main  ( int argc, char * argv [] ) {
   for (i=0;i<nrep;i++) {
     x[i]=0.0;
     T[i]=Tmin*exp(k*i);
+    cfgi_atT[i]=i;
     e[i]=0.0;
     h[i]=gsl_histogram_alloc(hist_n);
     nswapattempts[j]=0;
@@ -160,14 +166,13 @@ int main  ( int argc, char * argv [] ) {
       if (gsl_histogram_increment(h[j],x[j])==GSL_EDOM) noutside++;
     }
     if (Tswap_every > 0 && i%Tswap_every==0) {
-      //printf("swap attempt at step %i\n",i);fflush(stdout);
       /* do a swap attempt between two neighboring replicas */
       j=(int)gsl_rng_uniform_int(r,nrep-1);
       nswapattempts[j]++;
       oj=j+1;
       if (gsl_rng_uniform(r) < exp((1.0/T[oj]-1.0/T[j])*(e[j]-e[oj]))) {
         /* accept */
-        my_swap(j,oj,x);
+        my_swap(j,oj,x,cfgi_atT);
         nswapaccepts[j]++;
       }
     }
@@ -176,7 +181,7 @@ int main  ( int argc, char * argv [] ) {
         //fprintf(stdout,"%d % .5lf %d %d % .5lf\n",j,T[j],nswapattempts[j],nswapaccepts[j],
         //      nswapattempts[j]>0?((double)nswapaccepts[j])/nswapattempts[j]:0.0);
         //fflush(stdout);
-        fprintf(log_fp[j],"%d % .5lf %.3le\n",i,x[j],nswapattempts[j]>0?((double)nswapaccepts[j])/nswapattempts[j]:0.0);
+        fprintf(log_fp[j],"%d % .5lf %.3le\n",i,x[cfgi_atT[j]],nswapattempts[j]>0?((double)nswapaccepts[j])/nswapattempts[j]:0.0);
         fflush(log_fp[j]);
       }
     }
