@@ -2,16 +2,22 @@
 
 Cameron F. Abrams cfa22@drexel.edu
 
+This directory illustrates standard and well-tempered metadynamics simulations of a single butane molecule in vacuum for which the C1-C4 distance is the collective variable.  Both approaches use the `colvars` implementation in NAMD.
+
 ## Files provided 
 
 1. `butane.psf`, `butane.pdb`, `par_all35_ethers.prm`: necessary input files for a single butane molecule described using the CHARMM force field.
 2. `metadynamics.namd`: a NAMD configuration file for running standard metadynamics using `colvars`
 3. `welltempered.namd`: a NAMD configuration file for running well-tempered metadynamics using `colvars`
 4. `pmfplot.py`: a Python script for making plots of the bias potentials
+   ```bash
+   $ python pmfplot.py -h
+   ```
+   to see options.
 
 ## Standard Metadynamics
 
-Here, we'll use NAMD to output the bias potential at regular intervals.  In standard metadynamics, the best estimator of the free energy is the (negative) time-average of the bias, which is computed by `pmfplot.py` when the `-series-average` argument is supplied.
+Here, we'll instruct NAMD to output the bias potential at regular intervals.  In standard metadynamics, the best estimator of the free energy is the (negative) time-average of the bias, which is computed by `pmfplot.py` when the `-series-average` argument is supplied.
 ```bash
 $ namd2 +p1 metadynamics.namd >& log 
 $ python pmfplot.py -i 'butane_metadynamics.{:d}.pmf' -series 100000 10000000 100000 -o metad.png -series-average
