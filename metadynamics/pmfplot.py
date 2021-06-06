@@ -10,6 +10,7 @@ kB_kcal_per_mol=sc.physical_constants['Boltzmann constant'][0]/sc.calorie*sc.Avo
 parser=ap.ArgumentParser()
 parser.add_argument('-i',metavar='<str>',default='in.pmf',type=str,help='pmf file')
 parser.add_argument('-series',nargs=3,type=int,default=[0,0,0])
+parser.add_argument('-series-average',action='store_true',help='show series average in plot')
 parser.add_argument('-o',metavar='<str>',default='plot.png',type=str,help='output image file')
 parser.add_argument('-ylim',default=[0,10],nargs=2,type=float,help='plot ylimits')
 parser.add_argument('-xlim',default=[2.5,4.5],nargs=2,type=float,help='plot xlimits')
@@ -42,7 +43,7 @@ elif args.pmf_long_md != '':
     gotlong=True
     zz,flong=np.loadtxt(args.pmf_long_md,unpack=True)
 
-plt,ax=plt.subplots(1,1,figsize=(6,4))
+plt,ax=plt.subplots(1,1,figsize=(5,4))
 
 ax.set_ylim(args.ylim)
 ax.set_xlim(args.xlim)
@@ -52,14 +53,22 @@ if args.series[2]!=0:
     cmap=cm.get_cmap('inferno')
     f={}
     ni=int((args.series[1]-args.series[0])/args.series[2])
+    ffa=[]
     for i,s in enumerate(range(args.series[0],args.series[1],args.series[2])):
         fn=args.i.format(s)
         z,f[i]=np.loadtxt(fn,unpack=True)
+        if len(ffa)==0:
+            ffa=f[i].copy()
+        else:
+            ffa+=f[i]
         ax.plot(z,f[i],color=cmap(i/ni),alpha=0.3)
-    s+=args.series[2]
-    fn=args.i.format(s)
+    fn=args.i.format(args.series[1])
     z,ff=np.loadtxt(fn,unpack=True)
-    ax.plot(z,ff,color='black',label=args.label)
+    ffa+=ff
+    if args.series_average:
+        ax.plot(z,ffa/ni,color='black',label='{:s}-avg'.format(args.label))
+    else:
+        ax.plot(z,ff,color='black',label=args.label)
 
 else:
     z,f=np.loadtxt(args.i,unpack=True)
