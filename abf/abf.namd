@@ -1,0 +1,55 @@
+structure butane.psf
+coordinates butane.pdb
+outputName butane_abf_273K
+set temperature 273
+temperature $temperature
+ldBalancer none
+
+paraTypeCharmm on
+parameters par_all35_ethers.prm
+
+exclude scaled1-4
+1-4scaling 1.0
+cutoff 10.0
+switching on
+switchdist 9.0
+pairlistdist 11.5
+timestep 1.0
+rigidbonds none
+
+nonbondedFreq 1
+fullElectFrequency 2
+stepspercycle 10
+
+dielectric 80
+
+langevin on
+langevinDamping 5
+langevinTemp $temperature
+langevinHydrogen no
+
+outputEnergies 100000
+dcdfreq 100000
+restartfreq 100000
+numsteps 10000000 
+
+colvars on
+cv config {
+    colvar {
+        name dist
+        distance {
+           group1 { atomNumbers 4 }  
+           group2 { atomNumbers 14 }
+        }
+        upperboundary 5.5
+        lowerboundary 1.5
+        width 0.01
+    }
+    abf {
+        name abf_r
+        colvars dist
+        outputfreq 100
+        historyfreq 100000
+    }
+    colvarsTrajFrequency 100
+}
