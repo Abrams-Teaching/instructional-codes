@@ -17,25 +17,14 @@ This directory illustrates ABF simulation of a single butane molecule in vacuum 
 
 ## Example
 
-Here, we'll instruct NAMD to output the bias potential at regular intervals.  In standard metadynamics, the best estimator of the free energy is the (negative) time-average of the bias, which is computed by `pmfplot.py` when the `-series-average` argument is supplied.
+In `abf.namd`, ABF is enabled with default parameters, with history output every 100,000 steps.  The three files of history output can be plotted using `hist.py`:
 ```bash
-$ namd2 +p1 metadynamics.namd >& log 
-$ python pmfplot.py -i 'butane_metadynamics.{:d}.pmf' -series 100000 10000000 100000 -o metad.png -series-average
+$ namd2 +p1 abf.namd >& log 
+$ python ~/dxu/chet580/instructional-codes/abf/hist.py -f butane_abf_273K.hist.count -figsize 3 4 -xlim 1 6 -ylim 0 50000 -o hist.png -xlabel "z" -ylabel "H(z)" -cmap-name viridis_r -lw 1
+ $ python ~/dxu/chet580/instructional-codes/abf/hist.py -f butane_abf_273K.hist.grad -figsize 3 4 -xlim 1 6 -ylim -600 300 -o grad.png -xlabel "z" -ylabel "dF(z)/dz (kcal/mol/A)" -cmap-name viridis_r -lw 1
+ $ python ~/dxu/chet580/instructional-codes/abf/hist.py -f butane_abf_273K.hist.pmf -figsize 6 8 -xlim 2.5 4.5 -ylim 0 24 -o pmf.png -xlabel "z" -ylabel "F(z) (kcal/mol)" -cmap-name viridis_r
 ```
 
-![](metad-wav.png)
+![](pmf.png)
 
-## Well-Tempered Metadynamics
-
-Here, we output the bias potential as a function of time only for plot-making purposes; in WTMD, the best estimator of the free energy is just the most recent (negative) bias potential.
-
-```bash
-$ namd2 +p1 welltempered.namd >& log
-$ python pmfplot.py -i 'butane_welltemperedmetadynamics.{:d}.pmf' -series 100000 10000000 100000 -o wtmd.png
-```
-
-![](wtmd.png)
-
-## Long MD simulation for reference PMF
-
-The reference potential of mean force is computed by histogramming a long MD simulation; this is left as an exercise.  It can be accomplished easily by using a copy of either NAMD config file here in which the `metadynamics` bias in the `colvars` script is removed.  The `*.traj` file that results can then be processed into a PMF by direct Boltzmann inversion using `pmfplot.py` by providing it to the `-traj-long-md` option.  
+![](hist.png) ![](grad.png)
