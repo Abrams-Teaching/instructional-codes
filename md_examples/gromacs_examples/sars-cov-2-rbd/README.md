@@ -11,7 +11,7 @@ $ gmx pdb2gmx -f my_7c8j.pdb -o my_7c8j_processed.pdb -water spce
 # enlarge box
 $ gmx editconf -f my_7c8j_processed.pdb -o my_7c8j_newbox.gro -c -d 1.0 -bt cubic
 # solvate
-$ gmx solvate -cp my_7c8j_newbox.gro
+$ gmx solvate -cp my_7c8j_newbox.gro -cs spc216.gro -o my_7c8j_solv.gro -p topol.top
 # copy JK's ions.mdp; add ions
 $ gmx grompp -f ions.mdp -c my_7c8j_solv.gro -p topol.top -o ions.tpr
 $ gmx genion -s ions.tpr -o my_7c8j_solv.gro -p topol.top -pname NA -nname CL -neutral
